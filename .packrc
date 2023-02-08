@@ -1,0 +1,21 @@
+##################################################################
+#                                                                #
+# ██████  ██    ██ ███    ███  ██████ ███████ ██                 #
+# ██   ██  ██  ██  ████  ████ ██      ██      ██                 #
+# ██████    ████   ██ ████ ██ ██      █████   ██                 #
+# ██         ██    ██  ██  ██ ██      ██      ██                 #
+# ██         ██    ██      ██  ██████ ███████ ███████            #
+#                                                                #
+# Utilidades de Mecáncica Celeste                                #
+#                                                                #
+##################################################################
+# Licencia http://github.com/seap-udea/pymcel                    #
+##################################################################
+#Pthon binaries. In Linux is preferrable python3, nosetests3
+PYTHON=python3.11
+NOSETESTS=nosetests
+PIP=pip3.11
+
+#Default mode of release
+RELMODE=test
+
