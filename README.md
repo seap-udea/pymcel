@@ -49,7 +49,7 @@ import pymcel as pc
 Para una lista detallada de las características más nuevas
 introducidas en el paquete con la última versión vea el archivo
 [What's
-new](https://github.com/seap-udea/pymcel-public/blob/master/WHATSNEW.md).
+new](https://github.com/seap-udea/pymcel/blob/master/WHATSNEW.md).
 
 ------------
 
