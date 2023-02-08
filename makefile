@@ -48,7 +48,7 @@ master:
 ##################################################################
 clean:cleancrap
 
-cleanall:cleancrap cleanout cleandist
+cleanall:cleancrap cleanout cleandist cleandata
 
 #=========================
 #Clean
@@ -81,14 +81,9 @@ cleandist:
 	@-rm -rf dist/
 	@-rm -rf build/
 
-cleanpack:
-	@-cp src/$(PACKNAME)/version.py tmp/
-	@-rm -rf src/$(PACKNAME)/*.py
-	@-cp tmp/version.py src/$(PACKNAME)/version.py
-	@-rm -rf src/$(PACKNAME)/tests/*.py
-	@-rm -rf src/$(PACKNAME)/.build/*
-	@-rm -rf src/$(PACKNAME)/*.so
-	@-rm -rf src/$(PACKNAME)/__pycache__
+cleandata:
+	@echo "Cleaning all downloaded kernels..."
+	rm -rf src/$(PACKNAME)/data/[a-z]*.*
 
 ##################################################################
 #GIT

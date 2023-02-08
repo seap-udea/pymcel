@@ -11,6 +11,8 @@
 ##################################################################
 # Licencia http://github.com/seap-udea/pymcel                    #
 ##################################################################
+PACKNAME=pymcel
+
 #Pthon binaries. In Linux is preferrable python3, nosetests3
 PYTHON=python3.11
 NOSETESTS=nosetests

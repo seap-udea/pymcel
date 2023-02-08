@@ -53,6 +53,7 @@ def descarga_kernels():
     """
     Descarga todos los kernels utiles para pymcel
     """
+    descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",overwrite=True)
     f=open(kernel_pymcel("kernels"),"r")
     for line in f:
         url=line.strip()
@@ -60,6 +61,7 @@ def descarga_kernels():
         
 def lista_kernels():
     import glob
+    print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
     return glob.glob(kernel_pymcel("*"))
     
 #############################################################
