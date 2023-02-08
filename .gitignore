@@ -1,0 +1,12 @@
+*~
+.ipynb_checkpoints
+*.egg-info
+__pycache__
+.anim*
+env/
+dist/
+src/
+build/
+*.bak
+*.pyf
+*.so
