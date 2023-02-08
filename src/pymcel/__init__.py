@@ -53,7 +53,7 @@ def descarga_kernels():
     """
     Descarga todos los kernels utiles para pymcel
     """
-    f=open(kernel_pymcel("kernels.txt"),"r")
+    f=open(kernel_pymcel("kernels"),"r")
     for line in f:
         url=line.strip()
         descarga_kernel(url)
