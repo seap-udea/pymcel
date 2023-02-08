@@ -12,6 +12,7 @@
 # Licencia http://github.com/seap-udea/pymcel                    #
 ##################################################################
 [build-system]
-requires=['rebound','spiceypy','astroquery','pandas',
+requires=['setuptools',
+	  'rebound','spiceypy','astroquery','pandas',
 	  'matplotlib','tqdm','pandas']
 build-backend = "setuptools.build_meta"

@@ -1,6 +1,90 @@
 #############################################################
+# PAQUETES REQUERIDOS
+#############################################################
+from pymcel.version import *
+
+
+
+#############################################################
+# UTILIDADES
+#############################################################
+import os
+#Root directory
+try:
+    FILE=__file__
+    ROOTDIR=os.path.abspath(os.path.dirname(FILE))
+except:
+    import IPython
+    FILE=""
+    ROOTDIR=os.path.abspath('')
+
+def kernel_pymcel(path):
+    """
+        Get the full path of the `datafile` which is one of the datafiles provided with the package.
+        
+        Parameters:
+            datafile: Name of the data file, string.
+            
+        Return:
+            Full path to package datafile in the python environment.
+            
+    """
+    return os.path.join(ROOTDIR,'data',path);
+
+def descarga_kernel(url,filename=None,overwrite=False):
+    """
+    Descarga kernels de SPICE a la ubicación del paquete.
+
+    Ejemplo:
+    https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp
+    """
+    import requests,os
+    if not filename:
+        filename=url.split("/")[-1]
+    print(f"Descargando kernel '{filename}'...")
+    if os.path.exists(kernel_pymcel(filename)) and not overwrite:
+        print(f"El kernel '{filename}' ya fue descargado")
+    else:
+        response = requests.get(url)
+        open(kernel_pymcel(filename),"wb").write(response.content)
+        print("Hecho.")
+
+def descarga_kernels():
+    """
+    Descarga todos los kernels utiles para pymcel
+    """
+    f=open(kernel_pymcel("kernels.txt"),"r")
+    for line in f:
+        url=line.strip()
+        descarga_kernel(url)
+        
+def lista_kernels():
+    import glob
+    return glob.glob(kernel_pymcel("*"))
+    
+#############################################################
 # INTERNAL PACKAGES
 #############################################################
+def haversine(lon1, lat1, lon2, lat2):
+    """Calcula la distancia angular entre dos puntos sobre una esfera
+    una vez se han especificado los valores de la longitud y latitud
+    de los puntos.
+
+    La rutina usa la formula de Haversine.
+
+    Tomado de: https://stackoverflow.com/a/29546836    
+    """
+    import numpy as np
+    lon1, lat1, lon2, lat2 = map(np.radians,[lon1, lat1, lon2, lat2])
+    
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    
+    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+    
+    c = 2 * np.arcsin(np.sqrt(a))
+    return np.degrees(c)
+
 def fija_ejes_proporcionales(ax,values=(),margin=0,xcm=None,ycm=None,xmin=None,ymin=None):
     """Ajusta los ejes para hacerlos proporcionales de acuerdo a un
     conjunto de valores.
@@ -326,7 +410,7 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
     ax.view_init(elev=elev,azim=azim)
     
     #Decoración
-    from pymcel.plot import fija_ejes3d_proporcionales
+    from pymcel import fija_ejes3d_proporcionales
     xrange,yrange,zrange=fija_ejes3d_proporcionales(ax);
 
     ax.set_title(f"Cónica con:"+                 f"$p={p:.2f}$, $e={e:.2f}$, "+                 f"$i={i*180/pi:.2f}$, "+                 f"$\Omega={Omega*180/pi:.1f}$, "+                 f"$\omega={Omega*180/pi:.1f}$"
@@ -492,7 +576,7 @@ def plot_ncuerpos_3d(rs,vs,**opciones):
     for i in range(N):
         ax.plot(rs[i,:,0],rs[i,:,1],rs[i,:,2],**opciones);
 
-    from pymcel.plot import fija_ejes3d_proporcionales
+    from pymcel import fija_ejes3d_proporcionales
     fija_ejes3d_proporcionales(ax);
     fig.tight_layout();
     plt.show();
@@ -505,7 +589,7 @@ def plot_ncuerpos_3d(rs,vs,**opciones):
 
 def ncuerpos_solucion(sistema,ts):
     #Condiciones iniciales
-    from pymcel.export import sistema_a_Y
+    from pymcel import sistema_a_Y
     N,mus,Y0s=sistema_a_Y(sistema)
     
     #Masa total
@@ -519,7 +603,7 @@ def ncuerpos_solucion(sistema,ts):
     solucion=odeint(edm_ncuerpos,Y0s,ts,args=(N,mus))
     
     #Extracción de las posiciones y velocidades
-    from pymcel.export import solucion_a_estado
+    from pymcel import solucion_a_estado
     rs,vs=solucion_a_estado(solucion,N,Nt)
     
     #Calcula las constantes de movimiento
@@ -641,7 +725,7 @@ def kepler_newton(M,e,G0=1,delta=1e-5):
         #Inicializa el valor de En
         G=Gn
         #Función de Kepler y de su primera derivada en G
-        from pymcel.export import funcion_kepler
+        from pymcel import funcion_kepler
         k,kp,kpp=funcion_kepler(G,M,e)
         #Nuevo valor (regla de iteración)
         Gn=G-k/kp
@@ -718,7 +802,7 @@ def propaga_estado(sistema,t0,t,verbose=0):
     if verbose:print(f"hvec = {hvec}, evec = {evec}")
 
     #Paso 4 y 5: Elementos orbitales
-    from pymcel.export import estado_a_elementos
+    from pymcel import estado_a_elementos
     from numpy import hstack
     p,e,i,W,w,f0=estado_a_elementos(mu,hstack((r_0,v_0)))
 
@@ -767,14 +851,14 @@ def propaga_estado(sistema,t0,t,verbose=0):
         y=(M+sqrt(M**2+1))**(1./3)
         f=2*arctan(y-1/y)
     else:
-        from pymcel.export import kepler_newton
+        from pymcel import kepler_newton
         G,error,ni=kepler_newton(M,e,M,1e-14)
         f=2*arctan(sqrt((1+e)/(sigma*(1-e)))*ta(G/2))
 
     if verbose:print(f"f = {f*180/pi}")
         
     #Paso 9: de elementos a estado
-    from pymcel.export import elementos_a_estado
+    from pymcel import elementos_a_estado
     from numpy import array
     
     x=elementos_a_estado(mu,array([p,e,i,W,w,f]))
@@ -812,7 +896,7 @@ def funcion_universal_kepler(x,M,e,q):
     #Parametro alga
     alfa=(1-e)/q
     #Funcion universal de Kepler
-    from pymcel.export import serie_stumpff
+    from pymcel import serie_stumpff
     k=q*x+e*x**3*serie_stumpff(alfa*x**2,3)-M
     kp=q+e*x**2*serie_stumpff(alfa*x**2,2)
     kpp=q+e*x*serie_stumpff(alfa*x**2,1)
@@ -823,7 +907,7 @@ def funcion_universal_kepler_s(s,r0,rdot0,beta,mu,M):
     #Variable auxiliar
     u=beta*s**2
     #Series de Stumpff requeridas
-    from pymcel.export import serie_stumpff
+    from pymcel import serie_stumpff
     c0=serie_stumpff(u,0)
     s1c1=s*serie_stumpff(u,1)
     s2c2=s**2*serie_stumpff(u,2)
@@ -858,14 +942,14 @@ def propaga_f_g(mu,rvec0,vvec0,t0,t,delta=1e-14,verbose=False):
     #Resuelve la ecuación universal de Kepler en s
     sn=M/r0
 
-    from pymcel.export import metodo_laguerre
+    from pymcel import metodo_laguerre
     s,error,ni=metodo_laguerre(funcion_universal_kepler_s,
                                x0=sn,args=(r0,rdot0,beta,mu,M),delta=1e-15)
     
     #Variable auxiliar
     u=beta*s**2
     #Series de Stumpff requeridas
-    from pymcel.export import serie_stumpff
+    from pymcel import serie_stumpff
     s1c1=s*serie_stumpff(u,1)
     s2c2=s**2*serie_stumpff(u,2)
     s3c3=s**3*serie_stumpff(u,3)
@@ -1046,7 +1130,7 @@ def orbitas_crtbp(alfa,ro,vo,
     from numpy import linspace
     ts=linspace(0,T,Nt)
     #Solución numérica a la ecuación de movimiento
-    from pymcel.export import crtbp_solucion
+    from pymcel import crtbp_solucion
     solucion=crtbp_solucion(alfa,ro,vo,ts)
     #Posiciones y velocidades en el sistema rotante
     rs=solucion[0]
@@ -1077,7 +1161,7 @@ def orbitas_crtbp3d(alfa,ro,vo,
     from numpy import linspace
     ts=linspace(0,T,Nt)
     #Solución numérica a la ecuación de movimiento
-    from pymcel.export import crtbp_solucion
+    from pymcel import crtbp_solucion
     solucion=crtbp_solucion(alfa,ro,vo,ts)
     #Posiciones y velocidades en el sistema rotante
     rs=solucion[0]
