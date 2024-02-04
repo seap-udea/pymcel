@@ -38,7 +38,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         ],
-    version='0.1.1',
+    version='0.4.0',
 
     # ######################################################################
     # FILES
@@ -62,12 +62,12 @@ setuptools.setup(
     # ######################################################################
     # DEPENDENCIES
     # ######################################################################
-    install_requires=['rebound','spiceypy','astroquery','pandas',
+    install_requires=['spiceypy','astroquery','pandas',
 	              'matplotlib','tqdm','pandas'],
 
     # ######################################################################
     # OPTIONS
     # ######################################################################
     include_package_data=True,
-    package_data={"": ["data/*.*"]},
+    package_data={"": ["data/*"]},
 )

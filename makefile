@@ -108,7 +108,7 @@ pull:
 #Example: make release RELMODE=release VERSION=0.2.0.2 
 release:
 	@echo "Releasing a new version..."
-	@bash .release.sh $(RELMODE) $(VERSION)
+	@bash -x .release.sh $(RELMODE) $(VERSION)
 
 install:
 	@$(PIP) install -e .

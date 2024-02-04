@@ -2,8 +2,7 @@
 # PAQUETES REQUERIDOS
 #############################################################
 from pymcel.version import *
-
-
+import numpy as np
 
 #############################################################
 # UTILIDADES
@@ -76,7 +75,7 @@ def haversine(lon1, lat1, lon2, lat2):
 
     Tomado de: https://stackoverflow.com/a/29546836    
     """
-    import numpy as np
+    
     lon1, lat1, lon2, lat2 = map(np.radians,[lon1, lat1, lon2, lat2])
     
     dlon = lon2 - lon1
@@ -112,7 +111,7 @@ def fija_ejes_proporcionales(ax,values=(),margin=0,xcm=None,ycm=None,xmin=None,y
       (xlims,ylims) (tuple,tuple): Límites en x e y.
 
     """
-    import numpy as np
+    
     
     #values
     vals=np.array([])
@@ -175,7 +174,7 @@ def fija_ejes3d_proporcionales(ax):
       tomado originalmente de https://stackoverflow.com/a/31364297
 
     """
-    import numpy as np
+    
     x_limits = ax.get_xlim3d()
     y_limits = ax.get_ylim3d()
     z_limits = ax.get_zlim3d()
@@ -197,18 +196,6 @@ def fija_ejes3d_proporcionales(ax):
 
     return ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()
 
-#############################################################
-# OBJECTS FROM NOTEBOOKS
-#############################################################
-
-# ########################################
-#  .//Prefacio.ipynb
-# ########################################
-
-# ########################################
-#  .//Agradecimientos.ipynb
-# ########################################
-
 # ########################################
 #  .//Introduccion.ipynb
 # ########################################
@@ -216,31 +203,6 @@ def fija_ejes3d_proporcionales(ax):
 def calcula_discriminante(a,b,c):
     disc=b**2-4*a*c
     return disc
-
-
-# ########################################
-#  .//Fundamentos.ipynb
-# ########################################
-
-# ########################################
-#  .//Fundamentos.Calculo.ipynb
-# ########################################
-
-# ########################################
-#  .//Fundamentos.Calculo.Vectores.ipynb
-# ########################################
-
-# ########################################
-#  .//Fundamentos.Calculo.CalculoInfinitesimal.ipynb
-# ########################################
-
-# ########################################
-#  .//Fundamentos.Calculo.EcuacionesDiferenciales.ipynb
-# ########################################
-
-# ########################################
-#  .//Fundamentos.Calculo.CalculoVariacional.ipynb
-# ########################################
 
 # ########################################
 #  .//Fundamentos.Calculo.Series.ipynb
@@ -265,11 +227,6 @@ def coeficientes_fourier(funcion,T,k,args=()):
         Bs+=[2*quad(f_sin_n,0,T)[0]/T]
     
     return As,Bs
-
-
-# ########################################
-#  .//Fundamentos.Conicas.Geometria.ipynb
-# ########################################
 
 # ########################################
 #  .//Fundamentos.Conicas.Algebra.ipynb
@@ -430,91 +387,6 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
     
     if figreturn:return fig
 
-
-# ########################################
-#  .//Fundamentos.ProblemasSeleccionados.ipynb
-# ########################################
-
-# ########################################
-#  ./build/probs/Fundamentos.Problemas.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Introduccion.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Cinematica.Cantidades.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Cinematica.SolucionEdM.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Cinematica.SolucionNumerica.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Dinamica.Cantidades.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Dinamica.Postulados.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.Dinamica.SistemaParticulas.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.SistemasNoInerciales.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.SistemasNoInerciales.Numerico.ipynb
-# ########################################
-
-# ########################################
-#  .//Mecanica.ProblemasSeleccionados.ipynb
-# ########################################
-
-# ########################################
-#  ./build/probs/Mecanica.Problemas.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.Formulacion.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.SolucionAnalitica.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.SolucionAnalitica.ConstantesMovimiento.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.SolucionAnalitica.Energia.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.SolucionAnalitica.Sintesis.ipynb
-# ########################################
-
-# ########################################
-#  .//ProblemaNCuerpos.TeoremaVirial.ipynb
-# ########################################
-
 # ########################################
 #  .//ProblemaNCuerpos.SolucionNumerica.ipynb
 # ########################################
@@ -537,6 +409,24 @@ def edm_ncuerpos(Y,t,N=2,mus=[]):
             
     return dYdt
 
+def edm_ncuerpos_eficiente(Y,t,N=2,mus=[]):
+    """Esta rutina fue mejorada por Simón Echeverri, Astronomía UdeA
+    """
+
+    dY=Y[3*N:]
+    mj=np.array(mus).reshape(-1,1)
+    
+    r=Y[:3*N].reshape(N,3)
+    dydt=np.zeros((N,3))
+    for i in range(N):
+        g=(r[i]-r) 
+        c=mj*g 
+        c=np.delete(c,i,0) 
+        g=np.delete(g,i,0)
+        rij3=(np.linalg.norm(g,axis=1)**3).reshape(-1,1) 
+        A=c/rij3
+        dydt[i]=-sum(A)
+    return [*dY,*(dydt.flatten())] 
 
 def sistema_a_Y(sistema):
     mus=[]
@@ -573,7 +463,7 @@ def plot_ncuerpos_3d(rs,vs,**opciones):
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
     fig=plt.figure()
-    ax=fig.gca(projection='3d')
+    ax=fig.add_subplot(111,projection='3d')
 
     for i in range(N):
         ax.plot(rs[i,:,0],rs[i,:,1],rs[i,:,2],**opciones);
@@ -583,7 +473,6 @@ def plot_ncuerpos_3d(rs,vs,**opciones):
     fig.tight_layout();
     plt.show();
     return fig
-
 
 # ########################################
 #  .//ProblemaNCuerpos.SolucionNumerica.ConstantesMovimiento.ipynb
@@ -602,7 +491,7 @@ def ncuerpos_solucion(sistema,ts):
     
     #Solución
     from scipy.integrate import odeint
-    solucion=odeint(edm_ncuerpos,Y0s,ts,args=(N,mus))
+    solucion=odeint(edm_ncuerpos_eficiente,Y0s,ts,args=(N,mus))
     
     #Extracción de las posiciones y velocidades
     from pymcel import solucion_a_estado
