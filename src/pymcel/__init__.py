@@ -17,7 +17,7 @@ except:
     FILE=""
     ROOTDIR=os.path.abspath('')
 
-def kernel_pymcel(path):
+def kernel_pymcel(path,basedir=None):
     """
         Get the full path of the `datafile` which is one of the datafiles provided with the package.
         
@@ -28,9 +28,11 @@ def kernel_pymcel(path):
             Full path to package datafile in the python environment.
             
     """
-    return os.path.join(ROOTDIR,'data',path);
+    if basedir is None:
+        basedir = ROOTDIR
+    return os.path.join(basedir,'data',path);
 
-def descarga_kernel(url,filename=None,overwrite=False):
+def descarga_kernel(url,filename=None,overwrite=False,basedir=None):
     """
     Descarga kernels de SPICE a la ubicación del paquete.
 
@@ -41,23 +43,24 @@ def descarga_kernel(url,filename=None,overwrite=False):
     if not filename:
         filename=url.split("/")[-1]
     print(f"Descargando kernel '{filename}'...")
-    if os.path.exists(kernel_pymcel(filename)) and not overwrite:
+    if os.path.exists(kernel_pymcel(filename,basedir)) and not overwrite:
         print(f"El kernel '{filename}' ya fue descargado")
     else:
         response = requests.get(url)
         open(kernel_pymcel(filename),"wb").write(response.content)
         print("Hecho.")
 
-def descarga_kernels():
+def descarga_kernels(basedir=None):
     """
     Descarga todos los kernels utiles para pymcel
     """
-    descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",overwrite=True)
+    descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",
+                    overwrite=True,basedir=basedir)
     f=open(kernel_pymcel("kernels"),"r")
     for line in f:
         url=line.strip()
         descarga_kernel(url)
-        
+
 def lista_kernels():
     import glob
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
