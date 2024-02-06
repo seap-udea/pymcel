@@ -17,31 +17,14 @@
 ##################################################################
 SHELL:=/bin/bash
 
-#Package information
-include .packrc
-
 #Github specifics
-BRANCH=$(shell bash .getbranch.sh)
+BRANCH=$(shell bash bin/getbranch.sh)
 VERSION=$(shell tail -n 1 .versions)
+COMMIT=[MAN] Maintainance
 
 show:
 	@echo "Versión: $(VERSION)"
 	@echo "Rama de github: $(BRANCH)"
-
-##################################################################
-#BRANCHING
-##################################################################
-branch:
-	git checkout -b dev
-
-make rmbranch:
-	git branch -d dev
-
-devbranch:
-	git checkout dev
-
-master:
-	git checkout master
 
 ##################################################################
 #BASIC RULES
@@ -75,12 +58,13 @@ cleanout:
 	@-find . -name "*.out" -delete
 	@-find . -name "*.tout" -delete
 	@-find . -name "*.so" -delete
-	@-find . -name '__pycache__' -type d | xargs rm -fr
+	@-find . -name ".ipynb_checkpoints" -type d | xargs rm -fr
+	@-find . -name "__pycache__" -type d | xargs rm -fr
 
 cleandist:
 	@-rm -rf dist/
 	@-rm -rf build/
-
+	
 cleandata:
 	@echo "Cleaning all downloaded kernels..."
 	rm -rf src/$(PACKNAME)/data/[a-z]*.*
@@ -94,7 +78,7 @@ addall:cleanall
 
 commit:
 	@echo "Commiting..."
-	@-git commit -am "Commit"
+	git commit -am "$(COMMIT)"
 	@-git push origin $(BRANCH)
 
 pull:
