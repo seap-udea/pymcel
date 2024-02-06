@@ -29,6 +29,11 @@ Para instalar solo debe ejecutar.
 Si usted prefiere puede descargar e instalar directamente desde las 
 [fuentes](https://pypi.org/project/pymcel/#files).
 
+Es también interesante consultar el [repositorio en `GitHub`](http://github.com/seap-udea/pymcel) del paquete, donde además de las fuentes, 
+encontrará, entre otras cosas utiles, cuadernos de ejemplos y tutoriales sobre el uso del paquete.
+Muchos de estos cuadernos incorporan los códigos que vienen con el libro y pueden ser ejecutados
+por comodidad en `Google Colaboratory`.
+
 ## Para empezar
 
 Para empezar a usar el paquete basta que lo importe:
@@ -36,13 +41,6 @@ Para empezar a usar el paquete basta que lo importe:
 ```python
 import pymcel as pc
 ```
-
-> **NOTA**: Si esta trabajando en `Google Colab` antes de producir cualquier plot debe cargar el 
-  backend respectivo de matplotlib:
-
-  ```python
-  %matplotlib inline
-  ```
 
 ## ¿Qué hay de nuevo?
 
