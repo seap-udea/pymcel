@@ -3,6 +3,7 @@
 #############################################################
 from pymcel.version import *
 import numpy as np
+print("Paquete pymcel cargado. Versión:",version)
 
 #############################################################
 # UTILIDADES

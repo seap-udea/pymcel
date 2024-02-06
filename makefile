@@ -16,11 +16,12 @@
 #VARIABLES
 ##################################################################
 SHELL:=/bin/bash
-
-#Github specifics
 BRANCH=$(shell bash bin/getbranch.sh)
 VERSION=$(shell tail -n 1 .versions)
 COMMIT=[MAN] Maintainance
+RELMODE=release
+PYTHON=python3
+PIP=pip3
 
 show:
 	@echo "Versión: $(VERSION)"
@@ -78,7 +79,7 @@ addall:cleanall
 
 commit:
 	@echo "Commiting..."
-	git commit -am "$(COMMIT)"
+	@git commit -am "$(COMMIT)"
 	@-git push origin $(BRANCH)
 
 pull:
@@ -92,10 +93,10 @@ pull:
 #Example: make release RELMODE=release VERSION=0.2.0.2 
 release:
 	@echo "Releasing a new version..."
-	@bash -x .release.sh $(RELMODE) $(VERSION)
+	@bash bin/release.sh $(RELMODE) $(VERSION)
 
 install:
-	@$(PIP) install -e .
+	@sudo $(PIP) install -e .
 
 import:
 	@$(PYTHON) -c "from pymcel import *;print(version)"
