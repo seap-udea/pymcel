@@ -34,6 +34,8 @@ from scipy.integrate import quad
 from scipy.special import jv
 import math
 
+from pymcel import constantes
+
 print("Paquete pymcel cargado. Versión:",version)
 
 #############################################################
