@@ -57,6 +57,7 @@ echo "Releasing new version $version (current version $setversion) of the packag
 # Update setup.py file
 ##################################################################
 sed -i.bak "s/version=\'[0-9\.]*\'/version='$version'/gi" setup.py 
+sed -i.bak "s/version='[0-9\.]*'/version='$version'/gi" setup.py 
 
 ##################################################################
 # Remove previous versions
@@ -84,8 +85,8 @@ echo
 if [ $qtype -eq 0 ]
 then
     echo "Uploading to Test PyPI (use __token__ as username and pypi-<token> as password)..."
-    $PYTHON -m twine upload --repository testpypi dist/* --verbose
+    $PYTHON -m twine upload --repository testpypi dist/* 
 else
     echo "Uploading to PyPI (use your username and password)..."
-    $PYTHON -m twine upload dist/* --verbose
+    $PYTHON -m twine upload dist/* 
 fi

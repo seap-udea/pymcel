@@ -22,6 +22,7 @@ COMMIT=[MAN] Maintainance
 RELMODE=release
 PYTHON=python3
 PIP=pip3
+PACKNAME=pymcel
 
 show:
 	@echo "Versión: $(VERSION)"
@@ -65,10 +66,11 @@ cleanout:
 cleandist:
 	@-rm -rf dist/
 	@-rm -rf build/
+	@-rm -rf $(PACKNAME)-*/
 	
 cleandata:
 	@echo "Cleaning all downloaded kernels..."
-	rm -rf src/$(PACKNAME)/data/[a-z]*.*
+	@rm -rf src/$(PACKNAME)/data/[a-z]*.*
 
 ##################################################################
 #GIT

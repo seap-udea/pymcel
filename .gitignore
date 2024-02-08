@@ -10,3 +10,4 @@ build/
 *.bak
 *.pyf
 *.so
+pymcel-*
