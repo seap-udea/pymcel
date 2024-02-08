@@ -12,7 +12,8 @@
 # Licencia http://github.com/seap-udea/pymcel                    #
 ##################################################################
 #!/bin/bash
-. .packrc
+PYTHON=python3
+PACKNAME=pymcel
 
 type=$1;shift
 if [ "x$type" = "x" ]
