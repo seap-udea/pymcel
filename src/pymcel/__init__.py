@@ -91,8 +91,10 @@ def descarga_kernels(basedir='pymcel/'):
     descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",
                     overwrite=True,basedir=basedir)
     f=open(ubica_archivos("kernels"),"r")
-    if not os.path.exists(basedir):
-        os.makedirs(basedir)
+    kernel_dir = basedir+"/data/" 
+    if not os.path.exists(kernel_dir):
+        print(f"Creando el directorio con los kernels {kernel_dir}...")
+        os.makedirs(kernel_dir)
     for line in f:
         url=line.strip()
         descarga_kernel(url,basedir=basedir)
