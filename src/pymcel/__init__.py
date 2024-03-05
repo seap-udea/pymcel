@@ -6,6 +6,7 @@ import numpy as np
 import os
 import requests
 import glob
+import sys
 import matplotlib.pyplot as plt
 from scipy.integrate import quad
 from numpy import sin, cos
@@ -176,6 +177,42 @@ def fija_ejes_proporcionales(ax,values=(),margin=0,xcm=None,ycm=None,xmin=None,y
 
     return ax.get_xlim(),ax.get_ylim()
 
+def encuentra_rangos(rs):
+    """Encuentra los rangos de los datos en un conjunto de datos
+    tridimensionales.
+
+    Args:
+      rs (array): arreglo de numpy con los datos.
+          Los datos deben ser tridimensionales.
+
+    Returns:
+      (xlims,ylims,zlims) (tuple,tuple,tuple): Límites en x, y, z.
+
+    """
+    cube = len(rs.shape)
+
+    if cube == 2:
+        x_limits = rs[:,0].min(),rs[:,0].max()
+        y_limits = rs[:,1].min(),rs[:,1].max()
+        z_limits = rs[:,2].min(),rs[:,2].max()    
+    else:
+        x_limits = rs[:,:,0].min(),rs[:,:,0].max()
+        y_limits = rs[:,:,1].min(),rs[:,:,1].max()
+        z_limits = rs[:,:,2].min(),rs[:,:,2].max()
+
+    x_range = abs(x_limits[1] - x_limits[0])
+    x_middle = np.mean(x_limits)
+    y_range = abs(y_limits[1] - y_limits[0])
+    y_middle = np.mean(y_limits)
+    z_range = abs(z_limits[1] - z_limits[0])
+    z_middle = np.mean(z_limits)
+
+    plot_radius = 0.5*max([x_range, y_range, z_range])
+
+    return ([x_middle - plot_radius, x_middle + plot_radius],
+            [y_middle - plot_radius, y_middle + plot_radius],
+            [z_middle - plot_radius, z_middle + plot_radius])
+
 def fija_ejes3d_proporcionales(ax):
     """Ajusta los ejes en 3d para hacelos proporcionales.
 
@@ -217,19 +254,104 @@ def fija_ejes3d_proporcionales(ax):
 
     return ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()
 
-def plot_ncuerpos_3d(rs,vs,**opciones):
+def plot_ncuerpos_3d(rs,vs,tipo='matplotlib',**opciones):
+
     #Número de partículas
     N=rs.shape[0]
-    
-    fig=plt.figure()
-    ax=fig.add_subplot(111,projection='3d')
 
-    for i in range(N):
-        ax.plot(rs[i,:,0],rs[i,:,1],rs[i,:,2],**opciones);
+    if tipo == 'matplotlib':  
+        fig=plt.figure()
+        ax=fig.add_subplot(111,projection='3d')
 
-    fija_ejes3d_proporcionales(ax);
-    fig.tight_layout();
-    plt.show();
+        for i in range(N):
+            ax.plot(rs[i,:,0],rs[i,:,1],rs[i,:,2],**opciones);
+
+        fija_ejes3d_proporcionales(ax);
+        fig.tight_layout();
+        plt.show();
+        return fig
+
+    elif tipo == 'plotly':
+
+        try:
+            import plotly.graph_objects as go
+        except:
+            print("Debes instalar primero plotly en tu sistema: pip install -Uq plotly")
+            return None
+
+        fig = go.Figure()
+        for i in range(N):
+            xs = rs[i,:,0]
+            ys = rs[i,:,1]
+            zs = rs[i,:,2]
+            fig.add_trace(
+                go.Scatter3d(
+                    x=xs, y=ys, z=zs,
+                    mode='lines',
+                    name=f"Cuerpo {i}"
+                )
+            )
+        rmin = rs.min()
+        rmax = rs.max()
+
+        rangos = encuentra_rangos(rs)
+        fig['layout']['scene']['aspectmode'] = 'cube'
+        for i,axis in enumerate(['xaxis','yaxis','zaxis']):
+            fig['layout']['scene'][axis]['range'] = rangos[i]
+        fig.show()
+    else:
+        raise AssertionError(f"Tipo de gráfico '{tipo}' no reconocido")
+
+    return fig
+
+def plot_doscuerpos_3d(rs,vs,tipo='matplotlib',**opciones):
+
+    #Número de partículas
+    N=rs.shape[0]
+
+    if tipo == 'matplotlib':  
+        fig=plt.figure()
+        ax=fig.add_subplot(111,projection='3d')
+
+        for i in range(N):
+            ax.plot(rs[:,0],rs[:,1],rs[:,2],**opciones);
+
+        fija_ejes3d_proporcionales(ax);
+        fig.tight_layout();
+        plt.show();
+        return fig
+
+    elif tipo == 'plotly':
+
+        try:
+            import plotly.graph_objects as go
+        except:
+            print("Debes instalar primero plotly en tu sistema: pip install -Uq plotly")
+            return None
+
+        fig = go.Figure()
+        for i in range(N):
+            xs = rs[:,0]
+            ys = rs[:,1]
+            zs = rs[:,2]
+            fig.add_trace(
+                go.Scatter3d(
+                    x=xs, y=ys, z=zs,
+                    mode='lines',
+                    name=f"Cuerpo {i}"
+                )
+            )
+        rmin = rs.min()
+        rmax = rs.max()
+
+        rangos = encuentra_rangos(rs)
+        fig['layout']['scene']['aspectmode'] = 'cube'
+        for i,axis in enumerate(['xaxis','yaxis','zaxis']):
+            fig['layout']['scene'][axis]['range'] = rangos[i]
+        fig.show()
+    else:
+        raise AssertionError(f"Tipo de gráfico '{tipo}' no reconocido")
+
     return fig
 
 #############################################################
@@ -515,6 +637,21 @@ def ncuerpos_solucion(sistema,ts):
         
     #Devuelve las posiciones y velocidades
     return rs,vs,rps,vps,constantes
+
+def edm_dos_cuerpos(Y,t,mu):
+    r = Y[:3]
+    v = Y[3:]
+    drdt = v
+    dvdt = -mu*r/np.linalg.norm(r)**3
+    return np.concatenate([drdt,dvdt])
+
+def doscuerpos_solucion(mu,r,v,ts):
+    X0 = np.concatenate([r,v])
+    ts = np.linspace(0,10,300)
+    solucion = odeint(edm_dos_cuerpos,X0,ts,args=(1,))
+    rs = solucion[:,:3]
+    vs = solucion[:,3:]
+    return rs,vs
 
 def funcion_kepler(G,M=0,e=0):
     #Parametro sigma
