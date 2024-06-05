@@ -38,7 +38,7 @@ ts=linspace(0,10,Nt)
 alfa=0.3
 ro=[1.0,0.0,0.0]
 vo=[0.0,0.45,0.0]
-rs_rot,vs_rot,rs_ine,vs_ine,r1_ine,r2_ine=crtbp_solucion(alfa,ro,vo,ts)
+rs_rot,vs_rot,rs_ine,vs_ine,r1_ine,r2_ine=pc.crtbp_solucion(alfa,ro,vo,ts)
 ```
 
 Un gráfico de la trayectoria de la partícula, y de la posición de los cuerpos más masivos, tanto en el sistema de referencia rotante, como en el sistema de referencia inercial se puede realizar con este código:
