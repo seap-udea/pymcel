@@ -83,19 +83,19 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None):
     if filename == 'kernels':
         return
     print(f"Descargando kernel '{filename}' en '{basedir}'...")
-    if os.path.exists(ubica_archivos(filename,basedir)) and not overwrite:
-        print(f"El kernel '{filename}' ya fue descargado")
-    else:
+    if not os.path.exists(ubica_archivos(filename,basedir)) or overwrite:
         response = requests.get(url)
         open(ubica_archivos(filename,basedir),"wb").write(response.content)
         print("Hecho.")
-
-def descarga_kernels(basedir='pymcel/'):
+    else:
+        print(f"El kernel '{filename}' ya fue descargado")
+        
+def descarga_kernels(basedir='pymcel/',overwrite=False):
     """
     Descarga todos los kernels utiles para pymcel
     """
     descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",
-                    overwrite=True,basedir=basedir)
+                    overwrite=overwrite,basedir=basedir)
     f=open(ubica_archivos("kernels"),"r")
     kernel_dir = basedir+"/data/" 
     if not os.path.exists(kernel_dir):
@@ -103,7 +103,7 @@ def descarga_kernels(basedir='pymcel/'):
         os.makedirs(kernel_dir)
     for line in f:
         url=line.strip()
-        descarga_kernel(url,basedir=basedir)
+        descarga_kernel(url,basedir=basedir,overwrite=overwrite)
 
 def lista_kernels(basedir='pymcel/'):
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
