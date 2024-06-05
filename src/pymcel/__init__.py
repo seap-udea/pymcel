@@ -34,6 +34,9 @@ from scipy.misc import derivative
 from scipy.integrate import quad
 from scipy.special import jv
 import math
+from astroquery.jplhorizons import Horizons
+from astropy.time import Time
+import pandas as pd
 
 from pymcel import constantes
 
@@ -105,7 +108,146 @@ def descarga_kernels(basedir='pymcel/'):
 def lista_kernels(basedir='pymcel/'):
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
     return glob.glob(ubica_archivos("*",basedir))
+
+#############################################################
+# RUTINAS DE BASES DE DATOS
+#############################################################
+def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propiedades='default'):
+    """Realiza una consulta en Horizons
+
+    Opciones:
+        id, location, epochs: entradas comunes de Horizons.
+        Se puede pasar una epoca como una única fecha o una lista de fechas.
+
+        datos: datos requeridos. Valores aceptados: 'vectors', 'elements', 'ephemeris'
+
+        propiedades: lista con las propiedades que se quieren extraer.
+        
+            Ejemplo: propiedades = propiedades = [('x','m'),('y','m'),('z','m')]
+            
+            Si propiedades se pasa como 'default' se extraen las propiedades por defecto
+            de acuerdo con 'datos' así:
+                'vectors': vector de estado en SI.
+                'elements': elementos orbitales clásicos (a, e, I, W, w, f, M, P, to)
+
+    Salida:
+        Devuelve tres cosas:
+        tabla: la tabla de astropy con el resultado del query.
+        ts: lista de tiempos en JD de la consulta.
+        salida: pandas dataframe con los resultados de la consulta.
+
+
+    Ejemplos:
+
+        Una llamada básica: 
+
+            epochs = '2024-01-01 12:00:00'
+            tabla, ts, salida = pc.consulta_horizons(
+                id='399',location='@0',datos='elements',
+                propiedades='elementos',epochs=epochs
+            )
+
+        Otra:
+            epochs = ['2024-01-01 12:00:00','2024-01-02 12:00:00']
+            tabla, ts, salida = pc.consulta_horizons(
+                id='399',location='@0',datos='elements',
+                propiedades='elementos',epochs=epochs
+            )
+
+        Se pueden pedir propiedades específicas:
+        
+            epochs = dict(start='2024-01-01 12:00:00', stop='2024-01-02 12:00:00',step='1d')
+            propiedades=[('a','km'),('incl','deg')]
+            tabla, ts, salida = pc.consulta_horizons(
+                id='399',location='@0',datos='elements',
+                propiedades=propiedades,epochs=epochs
+            )
+    """
+
+    # Verifica cuál es la información solicitada
+    if propiedades == 'default':
+        if datos == 'vectors':
+            propiedades = [
+                ('x','m'),('y','m'),('z','m'),
+                ('vx','m/s'),('vy','m/s'),('vz','m/s')
+            ]
+        elif datos == 'elements':
+            propiedades = [
+                ('a','m'),('e','--'),('incl','deg'),
+                ('Omega','deg'),('w','deg'),('nu','deg'),
+                ('M','deg'),('P','d'),('n','deg/d'),('Tp_jd','d')
+            ]
+        else:
+            propiedades = None
+
+    # verifica el formato de las épocas 
+    if isinstance(epochs,dict):
+        # Mantiene el formato original
+        epochs = epochs
+
+    elif isinstance(epochs,(list,pd.core.series.Series,np.ndarray)):
+        if isinstance(epochs,list):
+            lista = []
+            for epoch in epochs:
+                if isinstance(epoch,str):
+                    time = Time(epoch).jd
+                else:
+                    time = epoch
+                lista += [time]
+            epochs = lista
+        else:
+            # Mantiene el formato original
+            epochs = epochs
+    elif isinstance(epochs,str):
+        # En este caso es una fecha individual
+        epochs = [Time(epochs).jd]
+
+    elif isinstance(epochs,(float,int)):
+        # En este caso es un valor individual en JD
+        epochs = [epochs]
+
+    else:
+        raise ValueError("El formato de epochs no es reconocido")
+
+    # Realizamos el query y obtenemos la tabla
+    query = Horizons(id=id, location=location, epochs=epochs)
+    tabla = eval(f"query.{datos}()")
+    data = tabla.to_pandas()
+
+    tiempos = np.array(data.datetime_jd)
+
+    # Extraemos las propiedades
+    if propiedades is not None:
+        # Obtenemos las unidades de las columnas
+        unidades = dict()
+        for columna in tabla.columns:
+            unidades[columna] = tabla[columna].unit
     
+        # Convertirmos a las unidades solicitadas
+        salida = dict()
+        for item in propiedades:
+            propiedad = item[0]
+            unidad = item[1]
+            try:
+                unit = unidades[propiedad]
+            except KeyError:
+                raise KeyError(f"Propiedad '{propiedad}' no reconocida. Las columnas son: {unidades.keys()}")
+
+            if unidad == '--':
+                factor = 1
+            else:
+                factor = 1*unidades[propiedad].to(unidad)
+            salida[propiedad] = data[propiedad]*factor
+        salida = pd.DataFrame(salida)
+    else:
+        salida = data
+
+    if len(salida) < 2:
+        salida = np.array(salida.iloc[0])
+        tiempos = tiempos[0]
+
+    return tabla, tiempos, salida
+
 #############################################################
 # RUTINAS DE GRAFICACIÓN
 #############################################################
@@ -262,7 +404,7 @@ def fija_ejes3d_proporcionales(ax,rangos=None):
 
     return ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()
 
-def plot_ncuerpos_3d(rs,vs,tipo='matplotlib',**opciones):
+def plot_ncuerpos_3d(rs,vs=None,tipo='matplotlib',**opciones):
 
     #Número de partículas
     N=rs.shape[0]
@@ -326,7 +468,7 @@ def plot_ncuerpos_3d(rs,vs,tipo='matplotlib',**opciones):
     return fig
 
 from scipy.interpolate import interp1d
-def plot_doscuerpos_3d(rs,vs,tipo='matplotlib',ts=None,**opciones):
+def plot_doscuerpos_3d(rs,vs=None,tipo='matplotlib',ts=None,**opciones):
 
     #Número de partículas
     N=rs.shape[0]

@@ -13,9 +13,12 @@ usarse para la enseñanza de (o la investigación en) Mecánica Celeste o
 Astrodinámica.
 
 Las utilidades que contienen el paquete fueron originalmente
-desarrolladas como parte del libro **Mecánica Celeste: teoría,
-algoritmos y problemas** del profesor Jorge I. Zuluaga de la
-Universidad de Antioquia.
+desarrolladas como parte del libro [**Mecánica Celeste: teoría,
+algoritmos y problemas**](https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p) 
+del profesor Jorge I. Zuluaga de la Universidad de Antioquia.
+
+Muchos de los códigos incluídos en el libro están disponibles en el
+[repositorio en `GitHub`](http://github.com/seap-udea/pymcel) del paquete.
 
 ## Download and install
 
@@ -29,8 +32,8 @@ Para instalar solo debe ejecutar.
 Si usted prefiere puede descargar e instalar directamente desde las 
 [fuentes](https://pypi.org/project/pymcel/#files).
 
-Es también interesante consultar el [repositorio en `GitHub`](http://github.com/seap-udea/pymcel) del paquete, donde además de las fuentes, 
-encontrará, entre otras cosas utiles, cuadernos de ejemplos y tutoriales sobre el uso del paquete.
+Es también interesante consultar el [repositorio en `GitHub`](http://github.com/seap-udea/pymcel) del paquete, 
+donde además de las fuentes, encontrará, entre otras cosas utiles, cuadernos de ejemplos y tutoriales sobre el uso del paquete.
 Muchos de estos cuadernos incorporan los códigos que vienen con el libro y pueden ser ejecutados
 por comodidad en `Google Colaboratory`.
 
@@ -42,6 +45,46 @@ Para empezar a usar el paquete basta que lo importe:
 import pymcel as pc
 ```
 
+El siguiente código, por ejemplo, integra las ecuaciones de movimiento de una partícula en el CRTBP:
+
+```python
+Nt=300
+ts=linspace(0,10,Nt)
+alfa=0.3
+ro=[1.0,0.0,0.0]
+vo=[0.0,0.45,0.0]
+rs_rot,vs_rot,rs_ine,vs_ine,r1_ine,r2_ine=crtbp_solucion(alfa,ro,vo,ts)
+```
+
+Un gráfico de la trayectoria en el sistema rotante y en el sistema inercial de coordenadas:
+
+```python
+import matplotlib.pyplot as plt
+
+fig,axs=plt.subplots(1,2,figsize=(8,4))
+
+# Sistema rotante
+ax=axs[0]
+ax.plot(rs_rot[:,0],rs_rot[:,1],'k-')
+ax.plot([-alfa],[0],'ro',ms=10)
+ax.plot([1-alfa],[0],'bo',ms=5)
+ax.set_title("Sistema Rotante")
+ax.grid()
+ax.axis('equal')	
+
+ax=axs[1]
+ax.plot(rs_ine[:,0],rs_ine[:,1],'k-')
+ax.plot(r1_ine[:,0],r1_ine[:,1],'r-')
+ax.plot(r2_ine[:,0],r2_ine[:,1],'b-')
+ax.set_title("Sistema Inercial")
+ax.grid()
+ax.axis('equal')
+
+plt.show()
+```
+
+<p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/crtbp-ejemplo.png?raw=true" alt="Ejemplo de CRTBP"/></p>
+
 ## ¿Qué hay de nuevo?
 
 Para una lista detallada de las características más nuevas
@@ -51,4 +94,4 @@ new](https://github.com/seap-udea/pymcel/blob/master/WHATSNEW.md).
 
 ------------
 
-Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023
+Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023, 2024
