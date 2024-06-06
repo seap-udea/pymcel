@@ -82,10 +82,18 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None):
         filename=url.split("/")[-1]
     if filename == 'kernels':
         return
+    qdata=False
+    if 'data:' in filename:
+        filename=url.split(":")[1]
+        qdata=True
+    
     print(f"Descargando kernel '{filename}' en '{basedir}'...")
     if not os.path.exists(ubica_archivos(filename,basedir)) or overwrite:
-        response = requests.get(url)
-        open(ubica_archivos(filename,basedir),"wb").write(response.content)
+        if qdata:
+            os.system(f"cp -rf {ROOTDIR}/data/{filename} {basedir}/data/")
+        else:
+            response = requests.get(url)
+            open(ubica_archivos(filename,basedir),"wb").write(response.content)
         print("Hecho.")
     else:
         print(f"El kernel '{filename}' ya fue descargado")
@@ -676,7 +684,7 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
 
     plt.close("all")
     fig=plt.figure()
-    ax=fig.gca(projection='3d')
+    ax=fig.add_subplot(111,projection='3d')
 
     #Gráfica de los puntos originales
     ax.plot(xs,ys,zs,'b-')
