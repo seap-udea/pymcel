@@ -25,3 +25,11 @@ Un paquete nunca estará completo y siempre habrán ideas para mejorarlo y exten
 - Hacer un notebook del libro solo con los algoritmos y rutinas útiles.
 
 - Hacer un video o un documento explicando cómo se escribió el libro.
+
+- Hacer un notebook con una guía básica de `Python`, `Jupyter`, `Google Colab` y `Matplotlib`.
+
+- Convertir algunas gráficas a `plotly`. 
+
+- Donde hayan animaciones, guardar el archivo de animación para ser reproducido por fuera de los notebooks.
+
+- Publicar aquí las presentaciones del curso.
