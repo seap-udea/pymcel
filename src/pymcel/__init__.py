@@ -118,6 +118,7 @@ def lista_kernels(basedir='pymcel/'):
     return glob.glob(ubica_archivos("*",basedir))
 
 def obtiene_datos(basedir='pymcel/'):
+    
     # Descarga todos los kernels para trabajar con SPICE
     descarga_kernels()
 
