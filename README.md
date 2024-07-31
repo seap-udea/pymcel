@@ -12,7 +12,7 @@ El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la
 
 Las utilidades que contienen el paquete fueron originalmente desarrolladas como parte del libro [**Mecánica Celeste: teoría, algoritmos y problemas**](https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p) del profesor Jorge I. Zuluaga de la Universidad de Antioquia. Muchos de los códigos incluídos en el libro están disponibles en [la sección de ejemplos del repositorio en `GitHub`](https://github.com/seap-udea/pymcel/tree/main/ejemplos/cuadernos-libro) del paquete.
 
-## Descarga e instala
+## Descarga e instalación
 
 `pymcel` esta disponible en `PyPI`, https://pypi.org/project/pymcel/. Para instalar solo debe ejecutar:
 
@@ -75,12 +75,11 @@ plt.show()
 
 Es también interesante consultar el [repositorio en `GitHub`](http://github.com/seap-udea/pymcel) del paquete, donde además de las fuentes, encontrará, entre otras cosas utiles, [cuadernos de ejemplos y tutoriales](https://github.com/seap-udea/pymcel/tree/main/ejemplos) sobre el uso del paquete.
 
-Muchos de estos cuadernos incorporan los códigos que vienen con el libro y pueden ser ejecutados por comodidad por docentes y estudiantes en `Google Colaboratory`.
+Muchos de estos cuadernos incorporan los códigos que vienen con el libro **Mecánica Celeste: teoría, algoritmos y problemas** y pueden ser ejecutados por comodidad por docentes y estudiantes en `Google Colab`.
 
 ## ¿Qué hay de nuevo?
 
 Para una lista detallada de las características más nuevas introducidas en el paquete con la última versión vea el archivo [What's new](https://github.com/seap-udea/pymcel/blob/master/WHATSNEW.md).
 
 ------------
-
 Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023, 2024
