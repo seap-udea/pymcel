@@ -117,6 +117,18 @@ def lista_kernels(basedir='pymcel/'):
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
     return glob.glob(ubica_archivos("*",basedir))
 
+def obtiene_datos(basedir='pymcel/'):
+    # Descarga todos los kernels para trabajar con SPICE
+    descarga_kernels()
+
+    # Obtiene los datos a partir del directorio de instalación de PYMCEL
+    datadir = f"{ROOTDIR}/data"
+    if os.path.isdir(datadir):
+        if not os.path.isdir("pymcel/data"):
+            os.mkdir("pymcel/data")
+        print("Copiando archivos de datos...")
+        os.system(f"cp -rf {datadir}/*.* pymcel/data/")    
+
 #############################################################
 # RUTINAS DE BASES DE DATOS
 #############################################################
