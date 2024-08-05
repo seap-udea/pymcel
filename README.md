@@ -16,6 +16,8 @@ Las utilidades que contienen el paquete fueron originalmente desarrolladas como 
 <p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/mcel-jorge-zuluaga-2024.png?raw=true" alt="Portada del Libro"/></p>
 </a>
 
+En este sitio encontrará además un documento con las [*Fe de Erratas* del libro](https://github.com/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-00-FeDeErratas.ipynb), en el que encontrarán algunas correcciones puntuales a defectos que se fueron con la primera edición.
+
 ## Descarga e instalación
 
 `pymcel` esta disponible en `PyPI`, https://pypi.org/project/pymcel/. Para instalar solo debe ejecutar:
