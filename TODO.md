@@ -6,6 +6,8 @@ Un paquete nunca estará completo y siempre habrán ideas para mejorarlo y exten
 
 - Documentar internamente todas las rutinas del paquete.
 
+- Escribir una sección exclusivamente de erratas. 
+
 - Hacer que todo el código satisfaga el estándar PEP8. 
 
 - Crear un conjunto de ejemplos de cálculos útiles en mecánica celeste usando las rutinas disponibles en el paquete:
