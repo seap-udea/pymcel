@@ -12,8 +12,7 @@ El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la
 
 Las utilidades que contienen el paquete fueron originalmente desarrolladas como parte del libro [**Mecánica Celeste: teoría, algoritmos y problemas**](https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p) del profesor Jorge I. Zuluaga de la Universidad de Antioquia. Muchos de los códigos incluídos en el libro están disponibles en [la sección de ejemplos del repositorio en `GitHub`](https://github.com/seap-udea/pymcel/tree/main/ejemplos/cuadernos-libro) del paquete.
 
-<a href="https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-an\
-tioquia-fisica/p">
+<a href="https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p">
 <p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/mcel-jorge-zuluaga-2024.png?raw=true" alt="Ejemplo de CRTBP"/></p>
 </a>
 
