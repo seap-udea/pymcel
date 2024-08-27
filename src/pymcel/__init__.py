@@ -37,7 +37,7 @@ import math
 from astroquery.jplhorizons import Horizons
 from astropy.time import Time
 import pandas as pd
-
+from matplotlib import patches
 from pymcel import constantes
 
 print("Paquete pymcel cargado. Versión:",version)
@@ -1586,3 +1586,74 @@ def plot_hiperbola(e=1.5,a=-10):
     #Fijamos la misma escala en los ejes
     plt.axis("equal")
     plt.show()
+
+def intersecta_circunferencias(x0, y0, r0, x1, y1, r1):
+    """Calcula la intersección entre dos circunferencias:
+
+    Parametros:
+        Circunferencia 1: x0, y0, r0
+        Circunferencia 2: x1, y1, r1
+
+    Retorna:
+        Puntos de intersección: (x3, y3), (x4, y4)
+
+    Notas:
+        Adaptado de: https://stackoverflow.com/a/55817881
+    """
+
+    d=math.sqrt((x1-x0)**2 + (y1-y0)**2)
+    
+    # non intersecting
+    if d > r0 + r1 :
+        return None
+    # One circle within other
+    if d < abs(r0-r1):
+        return None
+    # coincident circles
+    if d == 0 and r0 == r1:
+        return None
+    else:
+        a=(r0**2-r1**2+d**2)/(2*d)
+        h=math.sqrt(r0**2-a**2)
+        x2=x0+a*(x1-x0)/d   
+        y2=y0+a*(y1-y0)/d   
+        x3=x2+h*(y1-y0)/d     
+        y3=y2-h*(x1-x0)/d 
+
+        x4=x2-h*(y1-y0)/d
+        y4=y2+h*(x1-x0)/d
+        
+        return (x3, y3, x4, y4)
+
+def dibuja_esfera(ax, centro=(0,0,0), radio=1, **kwargs):
+    """Dibuja una esfera en un axis en 3d
+
+    Ejemplo:
+        # Esfera en 3d 
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        dibuja_esfera(ax, centro=(1,1,0), radio=0.2, color='b', alpha=0.5)
+        ax.axis('equal');
+    
+        # Esfera en 2d
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        dibuja_esfera(ax, centro=(1,1), radio=0.2, color='b', alpha=0.5)
+        ax.axis('equal');
+
+    Notas:
+        Adaptado de: https://stackoverflow.com/q/31768031
+    """
+    if ax.name != '3d':
+        s = patches.Circle(centro[:2], radius=radio, fill=True, **kwargs)
+        ax.add_patch(s)
+    else:
+        phi, theta = np.mgrid[0.0:np.pi:100j, 0.0:2.0*np.pi:100j]
+        x = centro[0] + radio*np.sin(phi)*np.cos(theta)
+        y = centro[1] + radio*np.sin(phi)*np.sin(theta)
+        z = centro[2] + radio*np.cos(phi)
+        s = ax.plot_surface(x, y, z, **kwargs)
+
+    return s
