@@ -714,8 +714,7 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
     #Decoración
     xrange,yrange,zrange=fija_ejes3d_proporcionales(ax);
 
-    ax.set_title(f"Cónica con:"+                 f"$p={p:.2f}$, $e={e:.2f}$, "+                 f"$i={i*180/pi:.2f}$, "+                 f"$\Omega={Omega*180/pi:.1f}$, "+                 f"$\omega={Omega*180/pi:.1f}$"
-            )
+    ax.set_title(f"Cónica con:"+rf"$p={p:.2f}$, $e={e:.2f}$, "+rf"$i={i*180/pi:.2f}$, "+rf"$\Omega={Omega*180/pi:.1f}$, "+rf"$\omega={Omega*180/pi:.1f}$")
     
     #Dibuja Ejes
     ax.plot([0,xrange[1]],[0,0],[0,0],'k-')
