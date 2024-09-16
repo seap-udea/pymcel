@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import quad
 from numpy import sin, cos
 from spiceypy import mxv
+import spiceypy as spy
 from numpy import zeros_like, pi, arccos, linspace
 from numpy import pi
 from numpy import arccos
@@ -71,7 +72,7 @@ def ubica_archivos(path,basedir=None):
         basedir = ROOTDIR
     return os.path.join(basedir,'data',path);
 
-def descarga_kernel(url,filename=None,overwrite=False,basedir=None):
+def descarga_kernel(url,filename=None,overwrite=False,basedir=None,verbose=False):
     """
     Descarga kernels de SPICE a la ubicación del paquete.
 
@@ -87,18 +88,18 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None):
         filename=url.split(":")[1]
         qdata=True
     
-    print(f"Descargando kernel '{filename}' en '{basedir}'...")
+    if verbose:print(f"Descargando kernel '{filename}' en '{basedir}'...")
     if not os.path.exists(ubica_archivos(filename,basedir)) or overwrite:
         if qdata:
             os.system(f"cp -rf {ROOTDIR}/data/{filename} {basedir}/data/")
         else:
             response = requests.get(url)
             open(ubica_archivos(filename,basedir),"wb").write(response.content)
-        print("Hecho.")
+        if verbose:print("Hecho.")
     else:
-        print(f"El kernel '{filename}' ya fue descargado")
+        if verbose:print(f"El kernel '{filename}' ya fue descargado")
         
-def descarga_kernels(basedir='pymcel/',overwrite=False):
+def descarga_kernels(basedir='pymcel/',overwrite=False,verbose=False):
     """
     Descarga todos los kernels utiles para pymcel
     """
@@ -107,11 +108,11 @@ def descarga_kernels(basedir='pymcel/',overwrite=False):
     f=open(ubica_archivos("kernels"),"r")
     kernel_dir = basedir+"/data/" 
     if not os.path.exists(kernel_dir):
-        print(f"Creando el directorio con los kernels {kernel_dir}...")
+        if verbose:print(f"Creando el directorio con los kernels {kernel_dir}...")
         os.makedirs(kernel_dir)
     for line in f:
         url=line.strip()
-        descarga_kernel(url,basedir=basedir,overwrite=overwrite)
+        descarga_kernel(url,basedir=basedir,overwrite=overwrite,verbose=verbose)
 
 def lista_kernels(basedir='pymcel/'):
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
@@ -268,6 +269,70 @@ def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propied
         tiempos = tiempos[0]
 
     return tabla, tiempos, salida
+
+def consulta_spice(id='399', location='@0', epochs=None):
+    """Consulta vector de estado desde SPICE
+
+    Opciones:
+        id = '399', location = '@0': string
+            IDs del cuerpo y de la ubicación con respecto a la que se quiere obtener la posición
+        epochs: entradas comunes de Horizons.
+        Se puede pasar una epoca como una única fecha o una lista de fechas.
+
+    Devuelve:
+        tabla, ts, data: 
+            Resultados.
+    """
+    # Obtiene kernels si no se han descargado
+    if not os.path.isfile('pymcel/data/kernels.txt'):
+        pc.descarga_kernels()
+
+    # Carga todos los kernels
+    spy.furnsh([
+        'pymcel/data/kernels.txt'
+    ])
+
+    # verifica el formato de las épocas 
+    if isinstance(epochs,dict):
+        # Mantiene el formato original
+        epochs = epochs
+
+    elif isinstance(epochs,(list,pd.core.series.Series,np.ndarray)):
+        if isinstance(epochs,list):
+            lista = []
+            for epoch in epochs:
+                if isinstance(epoch,str):
+                    time = Time(epoch).jd
+                else:
+                    time = epoch
+                lista += [time]
+            epochs = lista
+        else:
+            # Mantiene el formato original
+            epochs = epochs
+    elif isinstance(epochs,str):
+        # En este caso es una fecha individual
+        epochs = [Time(epochs).jd]
+
+    ets = []
+    for epoch in epochs:
+        et = spy.unitim(epoch,'JDTDB','ET')
+        deltat = spy.deltet(et,'ET')
+        ets += [ et + 0*deltat ]
+
+    Xs = []
+    for et in ets:
+        X,tl = spy.spkezr(id,et,'ECLIPJ2000','None',location.replace('@',''))
+        Xs += [X*1000]
+
+    if len(ets)>1:
+        data = np.array(X)
+        df = pd.DataFrame(Xs,columns=['x','y','z','vx','vy','vz'])
+    else:
+        data = Xs[0]
+        df = Xs[0]
+
+    return data, ets, df
 
 #############################################################
 # RUTINAS DE GRAFICACIÓN

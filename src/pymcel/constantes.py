@@ -17,3 +17,5 @@ for constante in lista:
 lista += ['año','día',]
 día = 24 * 60 * 60
 año = 365.25 * día
+dia = día
+yr = año

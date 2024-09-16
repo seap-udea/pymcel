@@ -57,7 +57,6 @@ echo "Releasing new version $version (current version $setversion) of the packag
 # Update setup.py file
 ##################################################################
 sed -i.bak "s/version=\'[0-9\.]*\'/version='$version'/gi" setup.py 
-sed -i.bak "s/version='[0-9\.]*'/version='$version'/gi" setup.py 
 
 ##################################################################
 # Remove previous versions
