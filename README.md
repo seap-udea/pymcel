@@ -10,9 +10,9 @@
 
 El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la enseñanza de (o la investigación en) Mecánica Celeste o Astrodinámica.
 
-Las utilidades que contienen el paquete fueron originalmente desarrolladas como parte del libro [**Mecánica Celeste: teoría, algoritmos y problemas**](https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p) del profesor Jorge I. Zuluaga de la Universidad de Antioquia. Muchos de los códigos incluídos en el libro están disponibles en [la sección de ejemplos del repositorio en `GitHub`](https://github.com/seap-udea/pymcel/tree/main/ejemplos/cuadernos-libro) del paquete.
+Las utilidades que contienen el paquete fueron originalmente desarrolladas como parte del libro [**Mecánica Celeste: teoría, algoritmos y problemas**](https://www.udea.edu.co/wps/portal/udea/web/inicio/go?goid=editorialn&q=2-15-1-9626-1) del profesor Jorge I. Zuluaga de la Universidad de Antioquia. Muchos de los códigos incluídos en el libro están disponibles en [la sección de ejemplos del repositorio en `GitHub`](https://github.com/seap-udea/pymcel/tree/main/ejemplos/cuadernos-libro) del paquete. El libro puede conseguirse [en PDF y en papel con la editorial de la Universidad de Antioquia](https://www.udea.edu.co/wps/portal/udea/web/inicio/go?goid=editorialn&q=2-15-1-9626-1) (normalmente envíos solo dentro de Colombia) o internacionalmente en [librerías en línea](https://bit.ly/libro-celeste-papel-externo) ([aquí también](https://bit.ly/libro-celeste-papel-addi)).
 
-<a href="https://www.libreriadelau.com/bw-mecanica-celeste-teoria-algoritmos-y-problemas-u-de-antioquia-fisica/p" target="_blank">
+<a href="https://www.udea.edu.co/wps/portal/udea/web/inicio/go?goid=editorialn&q=2-15-1-9626-1" target="_blank">
 <p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/mcel-jorge-zuluaga-2024.png?raw=true" alt="Portada del Libro"/></p>
 </a>
 

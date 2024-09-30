@@ -4,6 +4,7 @@
 from pymcel.version import *
 import numpy as np
 import os
+import re
 import requests
 import glob
 import sys
@@ -280,22 +281,41 @@ def consulta_spice(id='399', location='@0', epochs=None):
         Se puede pasar una epoca como una única fecha o una lista de fechas.
 
     Devuelve:
-        tabla, ts, data: 
+        tabla, ts, data:
             Resultados.
     """
     # Obtiene kernels si no se han descargado
     if not os.path.isfile('pymcel/data/kernels.txt'):
-        pc.descarga_kernels()
+        descarga_kernels()
 
     # Carga todos los kernels
     spy.furnsh([
         'pymcel/data/kernels.txt'
     ])
 
-    # verifica el formato de las épocas 
+    # verifica el formato de las épocas
     if isinstance(epochs,dict):
         # Mantiene el formato original
-        epochs = epochs
+        time_start = Time(epochs['start']).jd
+        time_stop = Time(epochs['stop']).jd
+        time_step = epochs['step']
+        match = re.match(r"(\d+)([a-zA-Z]+)",time_step)
+        if match:
+            number = int(match.group(1))  # Extract number part
+            letters = match.group(2)      # Extract letter part
+            tstep = number
+            if letters == 'd':
+              deltat = 1
+            elif letters == 'h':
+              deltat = 1/24
+            elif letters == 'm':
+              deltat = 1/24/60
+            elif letters == 's':
+              deltat = 1/24/60/60
+        else:
+            raise ValueError(f"El paso provisto '{time_step}' no es reconocido")
+
+        epochs = np.arange(time_start,time_stop+deltat*tstep/2,deltat*tstep)
 
     elif isinstance(epochs,(list,pd.core.series.Series,np.ndarray)):
         if isinstance(epochs,list):
@@ -326,13 +346,33 @@ def consulta_spice(id='399', location='@0', epochs=None):
         Xs += [X*1000]
 
     if len(ets)>1:
-        data = np.array(X)
-        df = pd.DataFrame(Xs,columns=['x','y','z','vx','vy','vz'])
+        data = np.array(Xs)
+        df = pd.DataFrame(data,columns=['x','y','z','vx','vy','vz'])
     else:
         data = Xs[0]
         df = Xs[0]
 
-    return data, ets, df
+    return data, np.array(epochs), df
+
+def consulta_propiedad(id='399',propiedad='masa',nvalues=1):
+    """Permite obtener propiedades de los kernels TPC
+    """
+    # Obtiene kernels si no se han descargado
+    if not os.path.isfile('pymcel/data/kernels.txt'):
+        descarga_kernels()
+    # Carga todos los kernels
+    spy.furnsh([
+        'pymcel/data/kernels.txt'
+    ])
+
+    # Carga la propiedad
+    if propiedad == 'masa':
+        # La masa es especial porque necesita factor G
+        valor = spy.bodvrd(id,'GM',1)[1][0]/(constantes.G*1e-9)
+    else:
+        valor = spy.bodvrd(id,propiedad,nvalues)[1]
+
+    return valor
 
 #############################################################
 # RUTINAS DE GRAFICACIÓN
