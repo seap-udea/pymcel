@@ -28,18 +28,18 @@ Los códigos pueden ser visualizados y ejecutados usando `Google Colab`. En la l
     <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-06-conicas_espacio.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
   - *Mecánica newtoniana*. Ecuación de movimiento y su integración numérica. Ley de gravitación universal. Centro de masa. Sistemas de muchas partículas.
-    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-mecanica_newtoniana.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-07-mecanica_newtoniana.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
   - *Dinámica de sistemas de rotantes*. Aceleraciones y velocidades en sistemas rotantes. 
-    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-dinamica_sistemas_rotantes.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-08-dinamica_sistemas_rotantes.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 - **El problema de los N-cuerpos**.
 
   - *Generalidades*. Constantes de movimiento. El plano invariable de Laplace. Conservación de la energía. El virial del sistema solar. El descubrimiento de la materia oscura.
-    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-ncuerpos_general.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-09-ncuerpos_general.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
   - *Solución numérica*. Unidades canónicas. Ecuaciones de movimiento reducidas. Constantes de movimiento. 
-    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-ncuerpos_solucion_numerica.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+    <a target="_blank" href="https://colab.research.google.com/github/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-10-ncuerpos_solucion_numerica.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 - **El problema de los dos cuerpos**.
 
