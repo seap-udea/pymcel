@@ -32,7 +32,10 @@ from numpy import tan
 from numpy import arctan
 from numpy import dot
 from spiceypy import rotate,mxv,vcrss
-from scipy.misc import derivative
+try:
+    from scipy.misc import derivative
+except:
+    from scipy.differentiate import derivative   
 from scipy.integrate import quad
 from scipy.special import jv
 import math
@@ -41,8 +44,9 @@ from astropy.time import Time
 import pandas as pd
 from matplotlib import patches
 from pymcel import constantes
+from plotly import graph_objs as go
 
-print("Paquete pymcel cargado. Versión:",version)
+print("pymcel version ",version)
 
 #############################################################
 # UTILIDADES DEL SISTEMA
@@ -271,6 +275,20 @@ def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propied
 
     return tabla, tiempos, salida
 
+def prepara_spice(verbose=True):
+    # Obtiene kernels si no se han descargado
+    if not os.path.isfile('pymcel/data/kernels.txt'):
+        descarga_kernels(verbose=verbose)
+
+    # Carga todos los kernels
+    if verbose:
+        print(f"Cargando todos los kernels de SPICE...")
+    spy.furnsh([
+        'pymcel/data/kernels.txt'
+    ])
+    if verbose:
+        print(f"El entorno está listo para usar los datos de SPICE.")
+
 def consulta_spice(id='399', location='@0', epochs=None):
     """Consulta vector de estado desde SPICE
 
@@ -284,15 +302,6 @@ def consulta_spice(id='399', location='@0', epochs=None):
         tabla, ts, data:
             Resultados.
     """
-    # Obtiene kernels si no se han descargado
-    if not os.path.isfile('pymcel/data/kernels.txt'):
-        descarga_kernels()
-
-    # Carga todos los kernels
-    spy.furnsh([
-        'pymcel/data/kernels.txt'
-    ])
-
     # verifica el formato de las épocas
     if isinstance(epochs,dict):
         # Mantiene el formato original
@@ -1761,3 +1770,513 @@ def dibuja_esfera(ax, centro=(0,0,0), radio=1, **kwargs):
         s = ax.plot_surface(x, y, z, **kwargs)
 
     return s
+
+
+def plotly_esfera(pfig,R,sphereargs=dict()):
+    """Gráfica una esfera en plotly
+
+    Ejemplo:
+        R = 3
+        fig = go.Figure()
+        pc.plotly_esfera(fig,R,sphereargs=dict(colorscale='Blues'))
+        fig.show()
+    """
+
+    # Opciones por defecto
+    sphereargs_default=dict(
+        colorscale='Blues',
+        opacity=0.5,
+        showscale=False
+    )
+    sphereargs_default.update(sphereargs)
+
+    # Coordenadas
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 100)
+    x_sphere = R * np.outer(np.cos(u), np.sin(v))
+    y_sphere = R * np.outer(np.sin(u), np.sin(v))
+    z_sphere = R * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    # Agregar la superficie de la Tierra
+    pfig.add_trace(go.Surface(
+        x=x_sphere,
+        y=y_sphere,
+        z=z_sphere,
+        **sphereargs_default
+    ))
+
+    pfig.update_layout(
+        scene=dict(
+            xaxis=dict(nticks=5, range=[-2*R,2*R]),
+            yaxis=dict(nticks=5, range=[-2*R,2*R]),
+            zaxis=dict(nticks=5, range=[-2*R,2*R]),
+            aspectmode='cube',
+
+        ),
+        margin=dict(l=0, r=0, b=0, t=30)
+    )
+
+def plotly_campo_vectorial(pfig,rs,vs,
+                           lineargs=dict(),
+                           scatterargs=dict(),
+                           coneargs=dict()):
+    """Gráfica un campo vectorial en plotly
+
+    Ejemplo:
+        R = 3
+        deg = np.pi/180
+        phis = np.linspace(0,2*np.pi,10)
+        thetas = 60*deg*np.ones_like(phis)
+        xs = np.array([R*np.sin(thetas)*np.cos(phis),R*np.sin(thetas)*np.sin(phis),R*np.cos(thetas)]).T
+        us = np.array([np.sin(thetas)*np.cos(phis),np.sin(thetas)*np.sin(phis),np.cos(thetas)]).T
+
+        fig = go.Figure()
+        pc.plotly_esfera(fig,R,sphereargs=dict(colorscale='Blues'))
+        pc.plotly_campo_vectorial(fig,xs,us)
+        fig.add_trace(go.Scatter3d(x=xs[:,0],y=xs[:,1],z=xs[:,2],mode='markers',name='Puntos'))
+
+        fig.show()
+    """
+
+    # Opciones por defecto
+    lineargs_default=dict(color='blue',width=5)
+    lineargs_default.update(lineargs)
+
+    scatterargs_default=dict(showlegend=False)
+    scatterargs_default.update(scatterargs)
+
+    coneargs_default=dict(showscale=False,sizemode='absolute')
+    coneargs_default.update(coneargs)
+
+    for i in range(len(rs)):
+        pfig.add_trace(go.Scatter3d(
+            x=[rs[i,0], rs[i,0] + vs[i,0]],
+            y=[rs[i,1], rs[i,1] + vs[i,1]],
+            z=[rs[i,2], rs[i,2] + vs[i,2]],
+            mode='lines',
+            line=lineargs_default,
+            **scatterargs_default,
+        ))
+        pfig.add_trace(go.Cone(
+            x=[rs[i,0] + vs[i,0]],
+            y=[rs[i,1] + vs[i,1]],
+            z=[rs[i,2] + vs[i,2]],
+            u=[vs[i,0]],
+            v=[vs[i,1]],
+            w=[vs[i,2]],
+            colorscale=[
+                [0,lineargs_default['color']],
+                [1,lineargs_default['color']]
+            ],
+            **coneargs_default
+        ))
+
+from urllib import request
+import json
+def obtiene_elementos_asteroide(id, verbose=True):
+    """Obtiene los elementos orbitales de un asteroide, y las covarianzas
+    de sus elementos
+
+    Ejemplo:
+        >>> promedios,covarianza = obtiene_elementos_asteroide('2024yr4',verbose=True)
+
+    Notas:
+      - Basado en el código de Leonard Gómez, Astronomía UdeA (2022)
+    """
+    url = f"https://ssd-api.jpl.nasa.gov/sbdb.api?sstr={id}&cov=mat&full-prec=true"
+    if verbose:
+      print(f"Descargando los datos para {id.upper()} de {url}...")
+    html=request.urlopen(url)
+    json_data=json.loads(html.read().decode())
+
+    t0=float(json_data["orbit"]["epoch"])
+    if verbose:
+      print(f"Epoca de los elementos (JDTDB): {t0}")
+
+    if verbose:
+      print(f"Extrayendo la matriz de covarianza...")
+    Cov=np.array(json_data["orbit"]["covariance"]["data"],dtype=float)
+    Cov_label=json_data["orbit"]["covariance"]["labels"]
+    t=float(json_data["orbit"]["epoch"])
+
+    if verbose:
+      print(f"Extrayendo los elementos y sus errores...")
+    nlen=len(json_data["orbit"]["elements"])
+    elnames=[]
+    elements=dict()
+    for i in range(nlen):
+      element=json_data["orbit"]["elements"][i]
+      elements[element["name"]]=dict()
+      for prop in element.keys():
+        try:
+          elements[element["name"]][prop]=float(element[prop])
+        except:
+          pass
+
+    for elname in elements.keys():
+      element=elements[elname]
+      print(f"Elemento {elname} = {element['value']:.7e} +/- {element['sigma']:.7e}")
+
+    means=[elements['e']['value'],elements['q']['value'],elements['tp']['value'],elements['om']['value'],elements['w']['value'],elements['i']['value']]
+    if verbose:
+      print(f"Orden de elementos orbitales: {Cov_label}")
+
+    return t0,means,Cov
+
+# ############################################################
+# Plot Grid
+# ############################################################
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+
+class UtilPlot(object):
+    """
+    This abstract class contains useful methods for the module plot
+    """ 
+        
+    
+    def mantisaExp(x):
+        """
+        Calculate the mantisa and exponent of a number.
+        
+        Parameters:
+            x: number, float.
+            
+        Return:
+            man: mantisa, float
+            exp: exponent, float.
+            
+        Examples:
+            m,e=mantisaExp(234.5), returns m=2.345, e=2
+            m,e=mantisaExp(-0.000023213), return m=-2.3213, e=-5
+        """
+        xa=np.abs(x)
+        s=np.sign(x)
+        try:
+            exp=int(np.floor(np.log10(xa)))
+            man=s*xa/10**(exp)
+        except OverflowError as e:
+            man=exp=0
+        return man,exp
+    
+class PlotGrid(object):
+    """
+    Class PlotGrid
+    
+    Create a grid of plots showing the projection of a N-dimensional
+    
+    Initialization attributes:
+        dproperties: list of properties to be shown, dictionary of dictionaries (N entries)
+            keys: label of attribute, ex. "q"
+            dictionary: 
+                label: label used in axis, string
+                range: range for property, tuple (2)
+        
+    Optional initialization attributes:
+        figsize=3 : base size for panels (the size of figure will be M x figsize), integer
+        fontsize=10 : base fontsize, int
+        direction='out' : direction of ticks in panels.
+    
+    Other attributes:
+        N: number of properties, int
+        M: size of grid matrix (M=N-1), int
+        fw: figsize
+        fs: fontsize
+        fig: figure handle, figure
+        axs: matrix with subplots, axes handles (MxM)
+        axp: matrix with subplots, dictionary of dictionaries
+        properties: list of properties labels, list of strings (N)
+    
+    Methods:
+        tightLayout
+        setLabels
+        setRanges
+        setTickParams
+        
+        plotHist
+        scatterPlot
+
+    Example:
+        # Read data
+        df_neas=pd.read_json(Util.packageFile("data/nea_extended.json.gz"))
+        df_neas["q"]=df_neas["a"]*(1-df_neas["e"])
+
+        # Prepare numpy array
+        data_neas=np.array(df_neas[["q","e","i","Node","Peri","M"]])
+        
+        # Describe properties
+        properties=dict(
+            q=dict(label=r"$q$ [au]",range=[0,1.3]),
+            e=dict(label=r"$e$",range=None),
+            i=dict(label=r"$i$",range=[0,25]),
+            W=dict(label=r"$\Omega$",range=None),
+            w=dict(label=r"$\omega$",range=None),
+            M=dict(label=r"$M$",range=None),
+        )
+
+        # Create PlotGrid
+        G=PlotGrid(properties,figsize=2)
+
+        # Plot histogram
+        args=dict(alpha=1,bins=50,colorbar=True,cmap="rainbow")
+        hist=G.plotHist(data_neas,**args)
+        
+        # Plot scatter
+        args=dict(c='r',marker='.',s=2,edgecolors='none',alpha=0.3)
+        G.scatterPlot(data_neas,**args)
+
+        G.fig.suptitle(f"{len(data_neas)} NEAs MPC",x=0.5,y=0.8,ha='left',fontsize=18)
+        G.fig.savefig("figs/NEAs-MPC.png")
+
+    Developed by Jorge I. Zuluaga, 2024
+    """
+    
+    def __init__(self,properties,figsize=3,fontsize=10,direction='out'):
+
+        #Basic attributes
+        self.dproperties=properties
+        self.properties=list(properties.keys())
+
+        #Secondary attributes
+        self.N=len(properties)
+        self.M=self.N-1
+        
+        #Optional properties
+        self.fw=figsize
+        self.fs=fontsize
+
+        #Create figure and axes: it works
+        try:
+            self.fig,self.axs=plt.subplots(
+                self.M,self.M,
+                constrained_layout=True,
+                figsize=(self.M*self.fw,self.M*self.fw),
+                sharex="col",sharey="row"
+            )
+            self.constrained=True
+        except:
+            self.fig,self.axs=plt.subplots(
+                self.M,self.M,
+                figsize=(self.M*self.fw,self.M*self.fw),
+                sharex="col",sharey="row"
+            )
+            self.constrained=False
+            
+        #Create named axis
+        self.axp=dict()
+        for j in range(self.N):
+            propj=self.properties[j]
+            if propj not in self.axp.keys():
+                self.axp[propj]=dict()
+            for i in range(self.N):
+                propi=self.properties[i]
+                if i==j:
+                    continue
+                if propi not in self.axp.keys():
+                    self.axp[propi]=dict()
+                if i<j:
+                    self.axp[propj][propi]=self.axp[propi][propj]
+                    continue
+                self.axp[propj][propi]=self.axs[i-1][j]
+    
+        #Deactivate unused panels
+        for i in range(self.M):
+            for j in range(i+1,self.M):
+                self.axs[i][j].axis("off")
+        
+        #Place ticks
+        for i in range(self.M):
+            for j in range(i+1):
+                self.axs[i,j].tick_params(axis='both',direction=direction)
+        for i in range(self.M):
+            self.axs[i,0].tick_params(axis='y',direction="out")
+            self.axs[self.M-1,i].tick_params(axis='x',direction="out")
+        
+        #Set properties of panels
+        self.setLabels()
+        self.setRanges()
+        self.setTickParams()
+        self.tightLayout()
+    
+    def tightLayout(self):
+        """
+        Tight layout if no constrained_layout was used.
+        
+        Parameters: None
+        
+        Return: None
+        """
+        if self.constrained==False:
+            self.fig.subplots_adjust(wspace=self.fw/100.,hspace=self.fw/100.)
+        self.fig.tight_layout()
+        
+    def setTickParams(self,**args):
+        """
+        Set tick parameters.
+        
+        Parameters: 
+            **args: same arguments as tick_params method, dictionary
+        
+        Return: None
+        """
+        opts=dict(axis='both',which='major',labelsize=0.8*self.fs)
+        opts.update(args)
+        for i in range(self.M):
+            for j in range(self.M):
+                self.axs[i][j].tick_params(**opts)
+        
+    def setRanges(self):
+        """
+        Set ranges in panels according to ranges defined in dparameters.
+        
+        Parameters: None
+        
+        Return: None
+        """
+        for i,propi in enumerate(self.properties):
+            for j,propj in enumerate(self.properties):
+                if j<=i:continue
+                if self.dproperties[propi]["range"] is not None:
+                    if isinstance(self.dproperties[propi]["range"],tuple):
+                        mus = self.dproperties[propi]["range"][0]
+                        cov = self.dproperties[propi]["range"][1]
+                        ipr = self.dproperties[propi]["range"][2]
+                        self.axp[propi][propj].set_xlim(mus[ipr]-4*cov[ipr,ipr]**0.5,mus[ipr]+4*cov[ipr,ipr]**0.5)
+                    else:
+                        self.axp[propi][propj].set_xlim(self.dproperties[propi]["range"])
+                if self.dproperties[propj]["range"] is not None:
+                    if isinstance(self.dproperties[propj]["range"],tuple):
+                        mus = self.dproperties[propj]["range"][0]
+                        cov = self.dproperties[propj]["range"][1]
+                        ipr = self.dproperties[propj]["range"][2]
+                        self.axp[propi][propj].set_ylim(mus[ipr]-4*cov[ipr,ipr]**0.5,mus[ipr]+4*cov[ipr,ipr]**0.5)
+                    else:
+                        self.axp[propi][propj].set_ylim(self.dproperties[propj]["range"])
+    
+    def setLabels(self,**args):
+        """
+        Set labels parameters.
+        
+        Parameters: 
+            **args: common arguments of set_xlabel, set_ylabel and text, dictionary
+        
+        Return: None
+        """
+        opts=dict(fontsize=self.fs)
+        opts.update(args)
+        for i,prop in enumerate(self.properties[:-1]):
+            label=self.dproperties[prop]["label"]
+            self.axs[self.M-1][i].set_xlabel(label,**opts)
+        for i,prop in enumerate(self.properties[1:]):
+            label=self.dproperties[prop]["label"]
+            self.axs[i][0].set_ylabel(label,rotation=90,labelpad=10,**opts)
+        for i in range(1,self.M):
+            label=self.dproperties[self.properties[i]]["label"]
+            self.axs[i-1][i].text(0.5,0.0,label,ha='center',
+                                  transform=self.axs[i-1][i].transAxes,**opts)
+            #270 if you want rotation
+            self.axs[i-1][i].text(0.0,0.5,label,rotation=270,va='center',
+                                  transform=self.axs[i-1][i].transAxes,**opts)
+
+        label=self.dproperties[self.properties[0]]["label"]
+        self.axs[0][1].text(0.0,1.0,label,rotation=0,ha='left',va='top',
+                              transform=self.axs[0][1].transAxes,**opts)
+
+        label=self.dproperties[self.properties[-1]]["label"]
+        #270 if you want rotation
+        self.axs[-1][-1].text(1.05,0.5,label,rotation=270,ha='left',va='center',
+                              transform=self.axs[-1][-1].transAxes,**opts)
+
+        self.tightLayout()
+        
+    def plotHist(self,data,noplot=False,colorbar=False,**args):
+        """
+        Create a 2d-histograms of data on all panels of the PlotGrid.
+        
+        Parameters: 
+            data: data to be histogramed (n=len(data)), numpy array (nxN)
+            
+        Optional parameters:
+            colorbar=False: include a colorbar?, boolean or int (0/1)
+            **args: all arguments of hist2d method, dictionary
+        
+        Return: 
+            hist: list of histogram instances.
+        """
+        opts=dict()
+        opts.update(args)
+            
+        hist=[]
+        for i,propi in enumerate(self.properties):
+            if self.dproperties[propi]["range"] is not None:
+                xmin,xmax=self.dproperties[propi]["range"]
+            else:
+                xmin=data[:,i].min()
+                xmax=data[:,i].max()
+            for j,propj in enumerate(self.properties):
+                if j<=i:continue
+                    
+                if self.dproperties[propj]["range"] is not None:
+                    ymin,ymax=self.dproperties[propj]["range"]
+                else:
+                    ymin=data[:,j].min()
+                    ymax=data[:,j].max()                
+                
+                opts["range"]=[[xmin,xmax],[ymin,ymax]]
+                h,xe,ye,im=self.axp[propi][propj].hist2d(data[:,i],data[:,j],**opts)
+                
+                hist+=[im]
+                if colorbar:
+                    #Create color bar
+                    divider=make_axes_locatable(self.axp[propi][propj])
+                    cax=divider.append_axes("top",size="9%",pad=0.1)
+                    self.fig.add_axes(cax)
+                    cticks=np.linspace(h.min(),h.max(),10)[2:-1]
+                    self.fig.colorbar(im,
+                                      ax=self.axp[propi][propj],
+                                      cax=cax,
+                                      orientation="horizontal",
+                                      ticks=cticks)
+                    cax.xaxis.set_tick_params(labelsize=0.5*self.fs,direction="in",pad=-0.8*self.fs)
+                    xt=cax.get_xticks()
+                    xm=xt.mean()
+                    m,e=UtilPlot.mantisaExp(xm)
+                    xtl=[]
+                    for x in xt:
+                        xtl+=["%.1f"%(x/10**e)]
+                    cax.set_xticklabels(xtl)
+                    cax.text(0,0.5,r"$\times 10^{%d}$"%e,ha="left",va="center",
+                             transform=cax.transAxes,fontsize=6,color='w')
+
+        self.setLabels()
+        self.setRanges()
+        self.setTickParams()
+        self.tightLayout()
+
+        return hist
+                    
+    def scatterPlot(self,data,**args):
+        """
+        Scatter plot on all panels of the PlotGrid.
+        
+        Parameters: 
+            data: data to be histogramed (n=len(data)), numpy array (nxN)
+            
+        Optional parameters:
+            **args: all arguments of scatter method, dictionary
+        
+        Return: 
+            scatter: list of scatter instances.
+        """
+        scatter=[]
+        for i,propi in enumerate(self.properties):
+            for j,propj in enumerate(self.properties):
+                if j<=i:continue
+                scatter+=[self.axp[propi][propj].scatter(data[:,i],data[:,j],**args)]
+
+        self.setLabels()
+        self.setRanges()
+        self.setTickParams()
+        self.tightLayout()
+        return scatter
+    

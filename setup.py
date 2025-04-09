@@ -38,7 +38,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         ],
-    version='0.6.11',
+    version='0.6.25',
 
     # ######################################################################
     # FILES
@@ -63,7 +63,7 @@ setuptools.setup(
     # DEPENDENCIES
     # ######################################################################
     install_requires=['spiceypy','astroquery','pandas',
-	              'matplotlib','tqdm','pandas'],
+	              'matplotlib','tqdm','pandas','plotly'],
 
     # ######################################################################
     # OPTIONS

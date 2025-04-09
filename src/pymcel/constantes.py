@@ -19,3 +19,19 @@ día = 24 * 60 * 60
 año = 365.25 * día
 dia = día
 yr = año
+
+#############################################################
+# CONSTANTES ACTUALIZADAS
+#############################################################
+mu_mercury = 22031.868551e9  # m^3/s^2, SPICE Kernels DE441
+mu_venus = 324858.592000e9   # m^3/s^2, SPICE Kernels DE441
+mu_earth = 398600.435507e9   # m^3/s^2, SPICE Kernels DE441
+mu_emb = 403503.235625e9  # m^3/s^2, SPICE Kernels DE441
+mu_mars = 42828.375816e9     # m^3/s^2, SPICE Kernels DE441
+mu_jupiter = 126712764.100000e9  # m^3/s^2, SPICE Kernels DE441
+mu_saturn = 37940584.841800e9    # m^3/s^2, SPICE Kernels DE441
+mu_uranus = 5794556.400000e9     # m^3/s^2, SPICE Kernels DE441
+mu_neptune = 6836527.100580e9    # m^3/s^2, SPICE Kernels DE441
+mu_pluto = 975.500000e9          # m^3/s^2, SPICE Kernels DE441
+mu_sun = 132712440041.279419e9   # m^3/s^2, SPICE Kernels DE441
+mu_moon = 4902.800118e9          # m^3/s^2, SPICE Kernels DE441

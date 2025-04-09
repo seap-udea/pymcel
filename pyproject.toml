@@ -14,5 +14,5 @@
 [build-system]
 requires=['setuptools',
 	  'spiceypy','astroquery','pandas',
-	  'matplotlib','tqdm','pandas']
+	  'matplotlib','tqdm','pandas','plotly']
 build-backend = "setuptools.build_meta"
