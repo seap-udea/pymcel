@@ -140,11 +140,14 @@ def obtiene_datos(basedir='pymcel/'):
 # RUTINAS DE BASES DE DATOS
 #############################################################
 def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propiedades='default'):
-    """Realiza una consulta en Horizons
+    """Realiza una consulta en Horizons usando astroquery.
 
     Opciones:
         id, location, epochs: entradas comunes de Horizons.
         Se puede pasar una epoca como una única fecha o una lista de fechas.
+
+            Si se piden elementos o vectores 'epochs' son fechas en TDB (tiempo dinámico del baricentro).
+            Si se piden efemérides 'epochs' son fechas en UTC.
 
         datos: datos requeridos. Valores aceptados: 'vectors', 'elements', 'ephemeris'
 
@@ -290,7 +293,10 @@ def prepara_spice(verbose=True):
         print(f"El entorno está listo para usar los datos de SPICE.")
 
 def consulta_spice(id='399', location='@0', epochs=None):
-    """Consulta vector de estado desde SPICE
+    """Consulta vector de estado desde SPICE usando el kernel que está cargado en el sistema.
+
+    El kernel que viene por defecto (DE430) tiene una precisión de 1 km para la Tierra. Úselo 
+    solamente para propósitos de demostración.
 
     Opciones:
         id = '399', location = '@0': string
@@ -305,8 +311,8 @@ def consulta_spice(id='399', location='@0', epochs=None):
     # verifica el formato de las épocas
     if isinstance(epochs,dict):
         # Mantiene el formato original
-        time_start = Time(epochs['start']).jd
-        time_stop = Time(epochs['stop']).jd
+        time_start = Time(epochs['start'],scale='tt').jd
+        time_stop = Time(epochs['stop'],scale='tt').jd
         time_step = epochs['step']
         match = re.match(r"(\d+)([a-zA-Z]+)",time_step)
         if match:
@@ -331,7 +337,7 @@ def consulta_spice(id='399', location='@0', epochs=None):
             lista = []
             for epoch in epochs:
                 if isinstance(epoch,str):
-                    time = Time(epoch).jd
+                    time = Time(epoch,scale='tt').jd
                 else:
                     time = epoch
                 lista += [time]
@@ -341,13 +347,12 @@ def consulta_spice(id='399', location='@0', epochs=None):
             epochs = epochs
     elif isinstance(epochs,str):
         # En este caso es una fecha individual
-        epochs = [Time(epochs).jd]
+        epochs = [Time(epochs,scale='tt').jd]
 
     ets = []
     for epoch in epochs:
         et = spy.unitim(epoch,'JDTDB','ET')
-        deltat = spy.deltet(et,'ET')
-        ets += [ et + 0*deltat ]
+        ets += [ et ]
 
     Xs = []
     for et in ets:
@@ -1960,7 +1965,7 @@ class UtilPlot(object):
         return man,exp
     
 class PlotGrid(object):
-    """
+    r"""
     Class PlotGrid
     
     Create a grid of plots showing the projection of a N-dimensional

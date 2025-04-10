@@ -1,3 +1,15 @@
+"""
+Constantes físicas y astronómicas.
+
+Notas:
+
+- Todas las constantes están en unidades SI.
+- Las constantes de astropy están en unidades SI, pero se pueden convertir a otras unidades usando la función
+    astropy.constants.convert.
+- Las constantes de astropy están en el módulo astropy.constants.
+- Los parámetros gravitacionales vienen del kernel SPICE DE441.
+"""
+
 #############################################################
 # CONSTANTES DE ASTROPY
 #############################################################
@@ -35,3 +47,9 @@ mu_neptune = 6836527.100580e9    # m^3/s^2, SPICE Kernels DE441
 mu_pluto = 975.500000e9          # m^3/s^2, SPICE Kernels DE441
 mu_sun = 132712440041.279419e9   # m^3/s^2, SPICE Kernels DE441
 mu_moon = 4902.800118e9          # m^3/s^2, SPICE Kernels DE441
+
+lista += [
+    'mu_mercury', 'mu_venus', 'mu_earth', 'mu_emb', 
+    'mu_mars', 'mu_jupiter', 'mu_saturn', 'mu_uranus', 
+    'mu_neptune', 'mu_pluto', 'mu_sun', 'mu_moon'
+]
