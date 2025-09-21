@@ -847,6 +847,18 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
     
     if figreturn:return fig
 
+def ncuerpos_a_pandas(ts,rs,vs):
+    Np = len(rs[:,0,0])
+    Nt = len(rs[0,:,0])
+    tabla = np.zeros((Np*Nt, 8))
+    tabla[:,1] = np.concatenate((ts,ts,ts))
+    for i in range(Np):
+        tabla[i*Nt:(i+1)*Nt,0]=i
+        tabla[i*Nt:(i+1)*Nt,2:5]=rs[i,:,:]
+        tabla[i*Nt:(i+1)*Nt,5:8]=vs[i,:,:]
+        df = pd.DataFrame(tabla, columns=['Partícula','tiempo','x','y','z','vx','vy','vz'])
+    return df
+
 def edm_ncuerpos(Y,t,N=2,mus=[]):    
     dYdt=zeros(6*N)
 
@@ -1776,6 +1788,150 @@ def dibuja_esfera(ax, centro=(0,0,0), radio=1, **kwargs):
 
     return s
 
+def intersecta_circunferencias3d(C1, r1, C2, r2, tol=1e-9):
+    """Encuentra los puntos de intersección de dos circunferencias en el espacio 3D.
+
+    Se asume que las circunferencias yacen en el plano definido por el origen (0,0,0)
+    y los centros de las circunferencias, C1 y C2.
+
+    Args:
+        C1 (np.ndarray): Centro de la primera circunferencia (vector 3D numpy).
+        r1 (float): Radio de la primera circunferencia. Debe ser positivo.
+        C2 (np.ndarray): Centro de la segunda circunferencia (vector 3D numpy).
+        r2 (float): Radio de la segunda circunferencia. Debe ser positivo.
+        tol (float): Tolerancia para comparaciones de punto flotante.
+
+    Returns:
+        list[np.ndarray]: Una lista que contiene los puntos de intersección
+                          (como arrays numpy 3D). Devuelve una lista vacía si no
+                          hay intersecciones, si las circunferencias son idénticas,
+                          o si el plano está mal definido (O, C1, C2 colineales).
+                          Devuelve una lista con un punto si las circunferencias
+                          son tangentes.
+
+    Ejemplos:
+
+      >>C1 = np.array([0.2,0.3,0.0])
+      >>C2 = np.array([0.9,0.2,0.1])
+      >>I1,I2 = intersecta_circunferencias3d(C1,1.0,C2,1.0)
+      >>I1,I2
+      (array([ 0.40954474, -0.67138648,  0.11180031]),
+      array([ 0.69045526,  1.17138648, -0.01180031]))
+
+      Verifica que si sean puntos de intersección: 
+      
+      >>> np.linalg.norm(C1-I1), np.linalg.norm(C1-I2)
+      np.float64(0.9999999999999999), np.float64(0.9999999999999998)
+      
+      >>> np.linalg.norm(C2-I1), np.linalg.norm(C2-I2)
+      np.linalg.norm(C2-I1), np.linalg.norm(C2-I2)
+      
+      >>> np.cross(np.cross(C1,C2),np.cross(C1,(I1-C1)))
+
+      array([-8.67361738e-19, -8.67361738e-19,  0.00000000e+00])
+
+    Elaborado por:
+      Gemini 2.5 Pro, prompt por Jorge I. Zuluaga
+      Pruebas y Código adaptado por Jorge I. Zuluaga
+
+    """
+    origin = np.array([0, 0, 0])
+    producto_cruz = np.cross(C1, C2)
+    if np.linalg.norm(producto_cruz) < tol:
+        print(f"El origen (0,0,0), C1 ({C1}), y C2 ({C2}) son colineales. "
+                "No se puede definir un plano único según el método especificado.")
+        return (origin, origin) # No hay intersección
+
+    # Cálculo de Distancia entre Centros
+    d_vec = C2 - C1 
+    d = np.linalg.norm(d_vec) 
+
+    # Comprobación de Posibilidad de Intersección
+    suma_radios = r1 + r2
+    dif_radios = abs(r1 - r2)
+    if d > suma_radios + tol:
+      print(f"No hay intersección porque los puntos están (d = {d}) más lejos que r1+r2 ({suma_radios})")
+      return (origin, origin) # No hay intersección
+
+    if d < dif_radios - tol:
+      print(f"No hay intersección porque los puntos están (d = {d}) más cerca que r1 - r2 ({dif_radios}) ")
+      return (origin, origin) # No hay intersección
+
+
+    # Cálculo de Parámetros 'a' y 'h' (Basado en Solución 2D)
+    """
+    'a' es la distancia desde C1 al punto medio del segmento de intersección,
+    medido a lo largo de la línea que une C1 y C2.
+    Se deriva de la ley de cosenos o restando las ecuaciones de las circunferencias.
+    Ecuación: r2^2 = h^2 + (d-a)^2 ; r1^2 = h^2 + a^2
+    Restando: r1^2 - r2^2 = a^2 - (d-a)^2 = a^2 - (d^2 - 2ad + a^2) = 2ad - d^2
+    => 2ad = r1^2 - r2^2 + d^2 => a = (r1^2 - r2^2 + d^2) / (2d)
+    """
+    a = (r1**2 - r2**2 + d**2) / (2 * d)
+
+    """
+    'h^2' es el cuadrado de la mitad de la longitud del segmento de intersección
+    (perpendicular a la línea C1-C2). Se deriva de r1^2 = a^2 + h^2.
+    """
+    h_cuadrado = r1**2 - a**2
+
+    # Manejo de imprecisiones numéricas cerca de la tangencia (h^2 debería ser >= 0)
+    if h_cuadrado < 0 and abs(h_cuadrado) < tol:
+         h_cuadrado = 0 # Forzar tangencia si es negativo pero muy cercano a cero
+    elif h_cuadrado < 0:
+         # Si es significativamente negativo, algo falló (no debería ocurrir si d está en el rango)
+         print(f"Advertencia: h^2 es negativo ({h_cuadrado}) a pesar de pasar el chequeo de distancia. No hay intersección real.")
+         return (origin, origin) # No hay intersección real
+
+    # h es la semi-longitud de la cuerda común
+    h = np.sqrt(h_cuadrado) 
+
+    # Definición de la Base Ortogonal 3D en el Plano O-C1-C2
+    """
+    Necesitamos una base ortonormal {ex, ey} dentro del plano O-C1-C2
+    donde ex va de C1 a C2 y ey es perpendicular a ex.
+
+    ex: vector unitario en la dirección de C1 a C2
+    
+    ey: vector unitario en el plano O-C1-C2, perpendicular a ex.
+    La normal al plano O-C1-C2 es n = C1 x C2 (calculado como producto_cruz).
+    ey debe ser ortogonal a n y a ex. Usamos el producto cruz: ey = normalize(n x ex).
+    El producto cruz n x ex da un vector perpendicular a n y a ex,
+    por lo tanto, yace en el plano (por ser perp. a n) y es perp. a ex.
+    """
+    ex = d_vec / d
+    ey_no_normalizado = np.cross(producto_cruz, ex)
+    norma_ey = np.linalg.norm(ey_no_normalizado)
+
+    # Comprobación de seguridad (no debería ser cero si O, C1, C2 no son colineales)
+    if norma_ey < tol:
+        print(f"Fallo al calcular el vector ortogonal ey. Verifique los vectores de entrada.")
+        return (origin, origin) # No hay intersección
+
+    ey = ey_no_normalizado / norma_ey # Normalizamos para obtener el vector unitario
+
+    """
+    Cálculo de los Puntos de Intersección en 3D
+    P_medio: Es el punto sobre el segmento C1-C2 a distancia 'a' de C1.
+    Es la proyección de los puntos de intersección sobre la línea C1-C2.
+    """
+    P_medio = C1 + a * ex
+
+    """
+    Los puntos de intersección (P1, P2) se obtienen moviéndose +/- h
+    en la dirección perpendicular ey desde P_medio.
+    """
+    P1 = P_medio + h * ey
+    P2 = P_medio - h * ey
+
+    # Devolver Resultados
+    if np.isclose(h, 0, atol=tol):
+        # Caso tangente: h es (casi) cero, P1 y P2 coinciden en P_medio.
+        print(f"Las circunferencias son tangentes")
+        return [P_medio, P_medio]
+    else:
+        # Caso secante: dos puntos de intersección distintos.
+        return [P1, P2]
 
 def plotly_esfera(pfig,R,sphereargs=dict()):
     """Gráfica una esfera en plotly
@@ -2038,6 +2194,70 @@ class PlotGrid(object):
     
     def __init__(self,properties,figsize=3,fontsize=10,direction='out'):
 
+        """
+        {Descripción breve de la función o clase.}
+
+        Parameters
+        ----------
+        param1 : type
+            Descripción de lo que representa este parámetro.
+        param2 : type
+            Descripción de lo que representa este parámetro.
+
+        Returns
+        -------
+        return_type
+            Descripción del valor de retorno.
+
+        Raises
+        ------
+        ExceptionType
+            Descripción de las condiciones bajo las cuales se genera esta excepción.
+
+        Methods
+        -------
+        method1(arg1, arg2)
+            Descripción del primer método de la clase.
+        method2(arg1)
+            Descripción del segundo método de la clase.
+
+        Attributes
+        ----------
+        attribute1 : type
+            Descripción de lo que representa este atributo.
+        attribute2 : type
+            Descripción de lo que representa este atributo.
+
+        Examples
+        --------
+        >>> function_name(arg1, arg2)
+        Resultado esperado o ejemplo de uso de la función.
+
+        Notes
+        -----
+        Aquí se pueden incluir detalles adicionales sobre la implementación o el comportamiento de la función o clase.
+
+        Warnings
+        --------
+        Aquí se pueden agregar advertencias o precauciones importantes relacionadas con el uso de la función o clase.
+
+        See Also
+        --------
+        other_function()
+            Descripción de otras funciones relevantes.
+        another_method()
+            Descripción de otros métodos relevantes.
+
+        References
+        ----------
+        Referencia1: Descripción de una fuente o artículo relevante para la función o clase.
+        Referencia2: Descripción de otra fuente o artículo relevante.
+
+        TODO
+        ----
+        - Tareas pendientes o futuras mejoras que se deben considerar.
+        - Optimización de la función para una mejor eficiencia."""
+        
         #Basic attributes
         self.dproperties=properties
         self.properties=list(properties.keys())
