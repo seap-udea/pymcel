@@ -2084,6 +2084,57 @@ def obtiene_elementos_asteroide(id, verbose=True):
 
     return t0,means,Cov
 
+def axis_equal(fig):
+    """Ajusta los ejes de una figura 3D de plotly para que tengan la misma escala
+    """
+    # Calculate the range for all axes using fig.data, excluding the sphere data
+    x_data = [trace.x for trace in fig.data if isinstance(trace, go.Scatter3d)]
+    y_data = [trace.y for trace in fig.data if isinstance(trace, go.Scatter3d)]
+    z_data = [trace.z for trace in fig.data if isinstance(trace, go.Scatter3d)]
+    if len(x_data)==0:
+        return
+
+    x_data = np.concatenate(x_data)
+    y_data = np.concatenate(y_data)
+    z_data = np.concatenate(z_data)
+
+    max_range = np.array([x_data.max()-x_data.min(), y_data.max()-y_data.min(), z_data.max()-z_data.min()]).max() / 2.0
+    mid_x = (x_data.max()+x_data.min()) * 0.5
+    mid_y = (y_data.max()+y_data.min()) * 0.5
+    mid_z = (z_data.max()+z_data.min()) * 0.5
+
+    fig.update_layout(
+        scene=dict(
+            aspectmode='cube',
+            xaxis=dict(range=[mid_x - max_range, mid_x + max_range]),
+            yaxis=dict(range=[mid_y - max_range, mid_y + max_range]),
+            zaxis=dict(range=[mid_z - max_range, mid_z + max_range]))
+    )
+
+def fig_body(R, mesh3d_opts=dict(), lighting_opts=dict()):
+    """Crea una figura de plotly con una esfera de radio R
+    """
+        
+    # Opciones por defecto
+    mesh3d_opts_def = dict(color='lightblue', opacity=0.5, alphahull=0)
+    mesh3d_opts_def.update(mesh3d_opts)
+    lighting_opts_def = dict(ambient=0.5, specular=1.0)
+    lighting_opts_def.update(lighting_opts)
+
+    # Esfera
+    d=np.pi/32
+    theta, phi = np.mgrid[0:np.pi+d:d, 0:2*np.pi:d]
+    x = np.sin(theta) * np.cos(phi)
+    y = np.sin(theta) * np.sin(phi)
+    z = np.cos(theta)
+    points = R*np.vstack([x.ravel(), y.ravel(), z.ravel()])
+    x, y, z = points
+    fig = go.Figure(data=[
+        go.Mesh3d(x=x, y=y, z=z, **mesh3d_opts_def)
+    ])
+    fig.update_traces(lighting=lighting_opts_def)
+    return fig
+
 # ############################################################
 # Plot Grid
 # ############################################################
