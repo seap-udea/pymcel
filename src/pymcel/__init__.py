@@ -119,6 +119,18 @@ def descarga_kernels(basedir='pymcel/',overwrite=False,verbose=False):
         url=line.strip()
         descarga_kernel(url,basedir=basedir,overwrite=overwrite,verbose=verbose)
 
+def carga_kernels(basedir='pymcel/', verbose=False):
+    """
+    Carga todos los kernels descargados en el sistema
+    """
+    if not os.path.isfile(ubica_archivos("kernels",basedir)):
+        descarga_kernels(basedir=basedir)
+    if verbose:print(f"Cargando todos los kernels de SPICE...")
+    spy.furnsh([
+        ubica_archivos("kernels.txt",basedir)
+    ])
+    if verbose:print(f"El entorno está listo para usar los datos de SPICE.")
+
 def lista_kernels(basedir='pymcel/'):
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
     return glob.glob(ubica_archivos("*",basedir))
@@ -348,6 +360,11 @@ def consulta_spice(id='399', location='@0', epochs=None):
     elif isinstance(epochs,str):
         # En este caso es una fecha individual
         epochs = [Time(epochs,scale='tt').jd]
+
+    # Carga todos los kernels
+    if not os.path.isfile('pymcel/data/kernels.txt'):
+        descarga_kernels(verbose=False)
+        prepara_spice()
 
     ets = []
     for epoch in epochs:
