@@ -199,7 +199,9 @@ log "Building distributions (sdist/wheel)..."
 "$PY" -m build
 
 log "Ensuring twine check dependencies..."
-"$PY" -m pip install -U twine readme_renderer nh3
+"$PY" -m pip install -U pip
+"$PY" -m pip install -U twine readme_renderer
+"$PY" -m pip install -U --force-reinstall --only-binary=:all: nh3 || "$PY" -m pip install -U nh3
 
 log "Validating distributions (twine check)..."
 "$PY" -m twine check dist/*
