@@ -7,6 +7,10 @@
 [![license](https://img.shields.io/pypi/l/pymcel)](https://pypi.org/project/pymcel/)
 [![implementation](https://img.shields.io/pypi/implementation/pymcel)](https://pypi.org/project/pymcel/)
 [![pythonver](https://img.shields.io/pypi/pyversions/pymcel)](https://pypi.org/project/pymcel/)
+[![docs](https://readthedocs.org/projects/pymcel/badge/?version=latest)](https://pymcel.readthedocs.io/es/latest/)
+[![book](https://img.shields.io/badge/Libro-Mecanica%20Celeste-0b7285)](https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345)
+[![buy](https://img.shields.io/badge/Donde%20conseguirlo-Librerias%20en%20linea-0b7285)](https://www.libreriadelau.com/mecanica-celeste-u-de-antioquia-fisica/p)
+[![orcid](https://img.shields.io/badge/ORCID-0000--0002--6140--3116-A6CE39?logo=orcid&logoColor=white)](https://orcid.org/0000-0002-6140-3116)
 
 El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la enseñanza de (o la investigación en) Mecánica Celeste o Astrodinámica.
 
@@ -83,9 +87,22 @@ Es también interesante consultar el [repositorio en `GitHub`](http://github.com
 
 Muchos de estos cuadernos incorporan los códigos que vienen con el libro **Mecánica Celeste: teoría, algoritmos y problemas** y pueden ser ejecutados por comodidad por docentes y estudiantes en `Google Colab`.
 
+## Como citar PyMCel
+
+Si usa `pymcel` en un trabajo academico, por favor cite el libro:
+
+```bibtex
+@book{jorge2024mecanica,
+   title={MECANICA CELESTE; TEORIA, ALGORITMOS Y PROBLEMAS.},
+   author={JORGE, I ZULUAGA},
+   year={2024},
+   publisher={UNIVERSIDAD DE ANTIOQUIA}
+}
+```
+
 ## ¿Qué hay de nuevo?
 
 Para una lista detallada de las características más nuevas introducidas en el paquete con la última versión vea el archivo [What's new](https://github.com/seap-udea/pymcel/blob/master/WHATSNEW.md).
 
 ------------
-Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023-2026
+Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023-Presente
