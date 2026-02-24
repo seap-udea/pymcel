@@ -3,6 +3,6 @@ API de PyMCel
 
 .. automodule:: pymcel
    :members:
-   :member-order: alphabetic
+   :member-order: alphabetical
    :undoc-members:
    :show-inheritance:

@@ -8,6 +8,7 @@ dist/
 src/
 build/
 docs/_build/
+docs/_build_api_check/
 *.bak
 *.pyf
 *.so

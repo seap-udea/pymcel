@@ -879,12 +879,12 @@ def calcula_discriminante(a,b,c):
     Parameters
     ----------
     a, b, c : float
-        Coeficientes del polinomio $ax^2 + bx + c$.
+        Coeficientes del polinomio :math:`ax^2 + bx + c`.
 
     Returns
     -------
     float
-        Discriminante $b^2 - 4ac$.
+        Discriminante :math:`b^2 - 4ac`.
 
     Examples
     --------
@@ -971,7 +971,7 @@ def polinomio_segundo_grado(coeficientes,x,y):
     Returns
     -------
     numpy.ndarray
-        Valores del polinomio $Ax^2 + Bxy + Cy^2 + Dx + Ey + F$.
+        Valores del polinomio :math:`Ax^2 + Bxy + Cy^2 + Dx + Ey + F`.
 
     Examples
     --------
@@ -2175,7 +2175,7 @@ def Vfuerza(r,**parametros):
     r : float | numpy.ndarray
         Radio.
     **parametros
-        `mu` y `n` para $V=-mu/r^n$.
+        `mu` y `n` para :math:`V=-mu/r^n`.
 
     Returns
     -------
@@ -2212,7 +2212,7 @@ def Vcen(r,**parametros):
     return V
 
 def Veff(r,Vf,**parametros):
-    """Potencial efectivo $V = V_f + V_{cen}$.
+    """Potencial efectivo :math:`V = V_f + V_{cen}`.
 
     Parameters
     ----------
@@ -2586,7 +2586,7 @@ def kepler_bessel(M,e,delta):
     return En,Dn,n
 
 def serie_stumpff(t,k,N=15):
-    """Calcula la serie de Stumpff $c_k(t)$.
+    """Calcula la serie de Stumpff :math:`c_k(t)`.
 
     Parameters
     ----------
@@ -2797,20 +2797,20 @@ def intersecta_circunferencias(x0, y0, r0, x1, y1, r1):
 def dibuja_esfera(ax, centro=(0,0,0), radio=1, **kwargs):
     """Dibuja una esfera en un axis en 3d
 
-    Ejemplo:
-        # Esfera en 3d 
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        dibuja_esfera(ax, centro=(1,1,0), radio=0.2, color='b', alpha=0.5)
-        ax.axis('equal');
-    
-        # Esfera en 2d
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        dibuja_esfera(ax, centro=(1,1), radio=0.2, color='b', alpha=0.5)
-        ax.axis('equal');
+    Examples
+    --------
+    >>> # Esfera en 3d
+    >>> import matplotlib.pyplot as plt
+    >>> fig = plt.figure()
+    >>> ax = fig.add_subplot(111, projection='3d')
+    >>> dibuja_esfera(ax, centro=(1,1,0), radio=0.2, color='b', alpha=0.5)
+    >>> ax.axis('equal')
+    >>>
+    >>> # Esfera en 2d
+    >>> fig = plt.figure()
+    >>> ax = fig.add_subplot(111)
+    >>> dibuja_esfera(ax, centro=(1,1), radio=0.2, color='b', alpha=0.5)
+    >>> ax.axis('equal')
 
     Notas:
         Adaptado de: https://stackoverflow.com/q/31768031
@@ -2848,26 +2848,20 @@ def intersecta_circunferencias3d(C1, r1, C2, r2, tol=1e-9):
                           Devuelve una lista con un punto si las circunferencias
                           son tangentes.
 
-    Ejemplos:
-
-      >>C1 = np.array([0.2,0.3,0.0])
-      >>C2 = np.array([0.9,0.2,0.1])
-      >>I1,I2 = intersecta_circunferencias3d(C1,1.0,C2,1.0)
-      >>I1,I2
-      (array([ 0.40954474, -0.67138648,  0.11180031]),
-      array([ 0.69045526,  1.17138648, -0.01180031]))
-
-      Verifica que si sean puntos de intersección: 
-      
-      >>> np.linalg.norm(C1-I1), np.linalg.norm(C1-I2)
-      np.float64(0.9999999999999999), np.float64(0.9999999999999998)
-      
-      >>> np.linalg.norm(C2-I1), np.linalg.norm(C2-I2)
-      np.linalg.norm(C2-I1), np.linalg.norm(C2-I2)
-      
-      >>> np.cross(np.cross(C1,C2),np.cross(C1,(I1-C1)))
-
-      array([-8.67361738e-19, -8.67361738e-19,  0.00000000e+00])
+        Examples
+        --------
+        >>> C1 = np.array([0.2, 0.3, 0.0])
+        >>> C2 = np.array([0.9, 0.2, 0.1])
+        >>> I1, I2 = intersecta_circunferencias3d(C1, 1.0, C2, 1.0)
+        >>> I1, I2
+        (array([ 0.40954474, -0.67138648,  0.11180031]),
+         array([ 0.69045526,  1.17138648, -0.01180031]))
+        >>> np.linalg.norm(C1 - I1), np.linalg.norm(C1 - I2)
+        np.float64(0.9999999999999999), np.float64(0.9999999999999998)
+        >>> np.linalg.norm(C2 - I1), np.linalg.norm(C2 - I2)
+        np.linalg.norm(C2 - I1), np.linalg.norm(C2 - I2)
+        >>> np.cross(np.cross(C1, C2), np.cross(C1, (I1 - C1)))
+        array([-8.67361738e-19, -8.67361738e-19,  0.00000000e+00])
 
     Elaborado por:
       Gemini 2.5 Pro, prompt por Jorge I. Zuluaga
@@ -2975,11 +2969,12 @@ def intersecta_circunferencias3d(C1, r1, C2, r2, tol=1e-9):
 def plotly_esfera(pfig,R,sphereargs=dict()):
     """Gráfica una esfera en plotly
 
-    Ejemplo:
-        R = 3
-        fig = go.Figure()
-        pc.plotly_esfera(fig,R,sphereargs=dict(colorscale='Blues'))
-        fig.show()
+    Examples
+    --------
+    >>> R = 3
+    >>> fig = go.Figure()
+    >>> pc.plotly_esfera(fig, R, sphereargs=dict(colorscale='Blues'))
+    >>> fig.show()
     """
 
     # Opciones por defecto
@@ -3022,20 +3017,32 @@ def plotly_campo_vectorial(pfig,rs,vs,
                            coneargs=dict()):
     """Gráfica un campo vectorial en plotly
 
-    Ejemplo:
-        R = 3
-        deg = np.pi/180
-        phis = np.linspace(0,2*np.pi,10)
-        thetas = 60*deg*np.ones_like(phis)
-        xs = np.array([R*np.sin(thetas)*np.cos(phis),R*np.sin(thetas)*np.sin(phis),R*np.cos(thetas)]).T
-        us = np.array([np.sin(thetas)*np.cos(phis),np.sin(thetas)*np.sin(phis),np.cos(thetas)]).T
-
-        fig = go.Figure()
-        pc.plotly_esfera(fig,R,sphereargs=dict(colorscale='Blues'))
-        pc.plotly_campo_vectorial(fig,xs,us)
-        fig.add_trace(go.Scatter3d(x=xs[:,0],y=xs[:,1],z=xs[:,2],mode='markers',name='Puntos'))
-
-        fig.show()
+    Examples
+    --------
+    >>> R = 3
+    >>> deg = np.pi / 180
+    >>> phis = np.linspace(0, 2 * np.pi, 10)
+    >>> thetas = 60 * deg * np.ones_like(phis)
+    >>> xs = np.array([
+    ...     R * np.sin(thetas) * np.cos(phis),
+    ...     R * np.sin(thetas) * np.sin(phis),
+    ...     R * np.cos(thetas),
+    ... ]).T
+    >>> us = np.array([
+    ...     np.sin(thetas) * np.cos(phis),
+    ...     np.sin(thetas) * np.sin(phis),
+    ...     np.cos(thetas),
+    ... ]).T
+    >>> fig = go.Figure()
+    >>> pc.plotly_esfera(fig, R, sphereargs=dict(colorscale='Blues'))
+    >>> pc.plotly_campo_vectorial(fig, xs, us)
+    >>> fig.add_trace(
+    ...     go.Scatter3d(
+    ...         x=xs[:, 0], y=xs[:, 1], z=xs[:, 2],
+    ...         mode='markers', name='Puntos'
+    ...     )
+    ... )
+    >>> fig.show()
     """
 
     # Opciones por defecto
@@ -3077,8 +3084,9 @@ def obtiene_elementos_asteroide(id, verbose=True):
     """Obtiene los elementos orbitales de un asteroide, y las covarianzas
     de sus elementos
 
-    Ejemplo:
-        >>> promedios,covarianza = obtiene_elementos_asteroide('2024yr4',verbose=True)
+    Examples
+    --------
+    >>> promedios, covarianza = obtiene_elementos_asteroide('2024yr4', verbose=True)
 
     Notas:
       - Basado en el código de Leonard Gómez, Astronomía UdeA (2022)
@@ -3190,7 +3198,7 @@ def fig_body(R, mesh3d_opts=dict(), lighting_opts=dict()):
     return fig
 
 def C(z):
-    """Funcion de Stumpff $C(z)$.
+    """Funcion de Stumpff :math:`C(z)`.
 
     Parameters
     ----------
@@ -3200,7 +3208,7 @@ def C(z):
     Returns
     -------
     float
-        Valor de $C(z)$.
+        Valor de :math:`C(z)`.
 
     Examples
     --------
@@ -3215,7 +3223,7 @@ def C(z):
         return 1 / 2
 
 def S(z):
-    """Funcion de Stumpff $S(z)$.
+    """Funcion de Stumpff :math:`S(z)`.
 
     Parameters
     ----------
@@ -3225,7 +3233,7 @@ def S(z):
     Returns
     -------
     float
-        Valor de $S(z)$.
+        Valor de :math:`S(z)`.
 
     Examples
     --------
