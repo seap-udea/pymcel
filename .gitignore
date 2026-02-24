@@ -7,7 +7,13 @@ env/
 dist/
 src/
 build/
+docs/_build/
 *.bak
 *.pyf
 *.so
 pymcel-*
+contrib
+.pymcel
+**/DS_Store
+**/.DS_Store
+**/Thumbs.db

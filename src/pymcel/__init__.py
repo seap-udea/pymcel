@@ -1,6 +1,3 @@
-#############################################################
-# PAQUETES REQUERIDOS
-#############################################################
 from pymcel.version import *
 import numpy as np
 import os
@@ -8,6 +5,7 @@ import re
 import requests
 import glob
 import sys
+import types
 import matplotlib.pyplot as plt
 from scipy.integrate import quad
 from numpy import sin, cos
@@ -46,11 +44,16 @@ from matplotlib import patches
 from pymcel import constantes
 from plotly import graph_objs as go
 
-print("pymcel version ",version)
+def _welcome():
+    """Muestra un mensaje de bienvenida al importar PyMCel.
 
-#############################################################
-# UTILIDADES DEL SISTEMA
-#############################################################
+    Examples
+    --------
+    >>> import pymcel  # dispara el mensaje de bienvenida
+    """
+    print(f"Bienvenido a PyMCel v{version} ¡al infinito y más allá!")
+_welcome()
+
 #Root directory
 try:
     FILE=__file__
@@ -59,30 +62,49 @@ except:
     FILE=""
     ROOTDIR=os.path.abspath('')
 
-#############################################################
-# KERNELS DE SPICE
-#############################################################
 def ubica_archivos(path,basedir=None):
-    """
-        Get the full path of the `datafile` which is one of the datafiles provided with the package.
-        
-        Parameters:
-            datafile: Name of the data file, string.
-            
-        Return:
-            Full path to package datafile in the python environment.
-            
+    """Obtiene la ruta absoluta de un archivo de datos del paquete.
+
+    Parameters
+    ----------
+    path : str
+        Nombre del archivo dentro del directorio `data` del paquete.
+    basedir : str, optional
+        Directorio base donde esta el paquete instalado. Si es `None`,
+        se usa el directorio del modulo.
+
+    Returns
+    -------
+    str
+        Ruta absoluta al archivo de datos.
+
+    Examples
+    --------
+    >>> ubica_archivos("kernels.txt")
     """
     if basedir is None:
         basedir = ROOTDIR
     return os.path.join(basedir,'data',path);
 
 def descarga_kernel(url,filename=None,overwrite=False,basedir=None,verbose=False):
-    """
-    Descarga kernels de SPICE a la ubicación del paquete.
+    """Descarga un kernel SPICE al directorio de datos del paquete.
 
-    Ejemplo:
-    https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp
+    Parameters
+    ----------
+    url : str
+        URL del kernel a descargar.
+    filename : str, optional
+        Nombre de archivo destino. Si es `None`, se toma del URL.
+    overwrite : bool, optional
+        Si `True`, reescribe un archivo existente.
+    basedir : str, optional
+        Directorio base donde esta el paquete instalado.
+    verbose : bool, optional
+        Si `True`, imprime mensajes de avance.
+
+    Examples
+    --------
+    >>> descarga_kernel("https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp")
     """
     if not filename:
         filename=url.split("/")[-1]
@@ -105,8 +127,20 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None,verbose=False
         if verbose:print(f"El kernel '{filename}' ya fue descargado")
         
 def descarga_kernels(basedir='pymcel/',overwrite=False,verbose=False):
-    """
-    Descarga todos los kernels utiles para pymcel
+    """Descarga todos los kernels listados por el paquete.
+
+    Parameters
+    ----------
+    basedir : str, optional
+        Directorio base donde se guardan los kernels.
+    overwrite : bool, optional
+        Si `True`, reescribe kernels existentes.
+    verbose : bool, optional
+        Si `True`, imprime mensajes de avance.
+
+    Examples
+    --------
+    >>> pc.descarga_kernels()
     """
     descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",
                     overwrite=overwrite,basedir=basedir)
@@ -120,8 +154,18 @@ def descarga_kernels(basedir='pymcel/',overwrite=False,verbose=False):
         descarga_kernel(url,basedir=basedir,overwrite=overwrite,verbose=verbose)
 
 def carga_kernels(basedir='pymcel/', verbose=False):
-    """
-    Carga todos los kernels descargados en el sistema
+    """Carga los kernels SPICE descargados en el sistema.
+
+    Parameters
+    ----------
+    basedir : str, optional
+        Directorio base donde se guardan los kernels.
+    verbose : bool, optional
+        Si `True`, imprime mensajes de avance.
+
+    Examples
+    --------
+    >>> carga_kernels(verbose=True)
     """
     if not os.path.isfile(ubica_archivos("kernels",basedir)):
         descarga_kernels(basedir=basedir)
@@ -132,11 +176,37 @@ def carga_kernels(basedir='pymcel/', verbose=False):
     if verbose:print(f"El entorno está listo para usar los datos de SPICE.")
 
 def lista_kernels(basedir='pymcel/'):
+    """Lista los kernels disponibles en el directorio de datos.
+
+    Parameters
+    ----------
+    basedir : str, optional
+        Directorio base donde se guardan los kernels.
+
+    Returns
+    -------
+    list[str]
+        Rutas a los archivos encontrados.
+
+    Examples
+    --------
+    >>> lista_kernels()
+    """
     print("Para descargar todos los kernels use: pymcel.descarga_kernels(). Para descargar un kernel específico use pymcel.descarga_kernel(<url>)")
     return glob.glob(ubica_archivos("*",basedir))
 
 def obtiene_datos(basedir='pymcel/'):
-    
+    """Copia los datos del paquete al directorio de trabajo.
+
+    Parameters
+    ----------
+    basedir : str, optional
+        Directorio base donde se guardan los datos.
+
+    Examples
+    --------
+    >>> pc.obtiene_datos()
+    """
     # Descarga todos los kernels para trabajar con SPICE
     descarga_kernels()
 
@@ -148,62 +218,52 @@ def obtiene_datos(basedir='pymcel/'):
         print("Copiando archivos de datos...")
         os.system(f"cp -rf {datadir}/*.* pymcel/data/")    
 
-#############################################################
-# RUTINAS DE BASES DE DATOS
-#############################################################
 def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propiedades='default'):
     """Realiza una consulta en Horizons usando astroquery.
 
-    Opciones:
-        id, location, epochs: entradas comunes de Horizons.
-        Se puede pasar una epoca como una única fecha o una lista de fechas.
+    Parameters
+    ----------
+    id : str, optional
+        Identificador del cuerpo en Horizons.
+    location : str, optional
+        Ubicacion del observador (p. ej. '@0').
+    epochs : str | list | dict | float | int, optional
+        Epoca(s) de consulta. Puede ser una fecha, lista de fechas o
+        un diccionario con `start`, `stop`, `step`.
+    datos : {'vectors', 'elements', 'ephemeris'}, optional
+        Tipo de datos a solicitar.
+    propiedades : list | 'default', optional
+        Propiedades a extraer y sus unidades, por ejemplo
+        `[('x','m'),('y','m'),('z','m')]`. Si es 'default', usa un
+        conjunto por defecto segun `datos`.
 
-            Si se piden elementos o vectores 'epochs' son fechas en TDB (tiempo dinámico del baricentro).
-            Si se piden efemérides 'epochs' son fechas en UTC.
+    Returns
+    -------
+    tabla : astropy.table.Table
+        Tabla de resultados de Horizons.
+    ts : numpy.ndarray | float
+        Tiempos en JD de la consulta.
+    salida : pandas.DataFrame | numpy.ndarray
+        Datos convertidos a las unidades solicitadas.
 
-        datos: datos requeridos. Valores aceptados: 'vectors', 'elements', 'ephemeris'
-
-        propiedades: lista con las propiedades que se quieren extraer.
-        
-            Ejemplo: propiedades = propiedades = [('x','m'),('y','m'),('z','m')]
-            
-            Si propiedades se pasa como 'default' se extraen las propiedades por defecto
-            de acuerdo con 'datos' así:
-                'vectors': vector de estado en SI.
-                'elements': elementos orbitales clásicos (a, e, I, W, w, f, M, P, to)
-
-    Salida:
-        Devuelve tres cosas:
-        tabla: la tabla de astropy con el resultado del query.
-        ts: lista de tiempos en JD de la consulta.
-        salida: pandas dataframe con los resultados de la consulta.
-
-
-    Ejemplos:
-
-        Una llamada básica: 
-
-            epochs = '2024-01-01 12:00:00'
-            tabla, ts, salida = pc.consulta_horizons(
-                id='399',location='@0',datos='elements',
-                propiedades='elementos',epochs=epochs
-            )
-
-        Otra:
-            epochs = ['2024-01-01 12:00:00','2024-01-02 12:00:00']
-            tabla, ts, salida = pc.consulta_horizons(
-                id='399',location='@0',datos='elements',
-                propiedades='elementos',epochs=epochs
-            )
-
-        Se pueden pedir propiedades específicas:
-        
-            epochs = dict(start='2024-01-01 12:00:00', stop='2024-01-02 12:00:00',step='1d')
-            propiedades=[('a','km'),('incl','deg')]
-            tabla, ts, salida = pc.consulta_horizons(
-                id='399',location='@0',datos='elements',
-                propiedades=propiedades,epochs=epochs
-            )
+    Examples
+    --------
+    >>> epochs = '2024-01-01 12:00:00'
+    >>> tabla, ts, salida = pc.consulta_horizons(
+    ...     id='399', location='@0', datos='elements',
+    ...     propiedades='elementos', epochs=epochs
+    ... )
+    >>> epochs = ['2024-01-01 12:00:00', '2024-01-02 12:00:00']
+    >>> tabla, ts, salida = pc.consulta_horizons(
+    ...     id='399', location='@0', datos='elements',
+    ...     propiedades='elementos', epochs=epochs
+    ... )
+    >>> epochs = dict(start='2024-01-01 12:00:00', stop='2024-01-02 12:00:00', step='1d')
+    >>> propiedades = [('a','km'),('incl','deg')]
+    >>> tabla, ts, salida = pc.consulta_horizons(
+    ...     id='399', location='@0', datos='elements',
+    ...     propiedades=propiedades, epochs=epochs
+    ... )
     """
 
     # Verifica cuál es la información solicitada
@@ -291,6 +351,17 @@ def consulta_horizons(id='399',location='@0',epochs=None,datos='vectors',propied
     return tabla, tiempos, salida
 
 def prepara_spice(verbose=True):
+    """Prepara el entorno SPICE descargando y cargando kernels.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        Si `True`, imprime mensajes de avance.
+
+    Examples
+    --------
+    >>> prepara_spice(verbose=True)
+    """
     # Obtiene kernels si no se han descargado
     if not os.path.isfile('pymcel/data/kernels.txt'):
         descarga_kernels(verbose=verbose)
@@ -305,20 +376,31 @@ def prepara_spice(verbose=True):
         print(f"El entorno está listo para usar los datos de SPICE.")
 
 def consulta_spice(id='399', location='@0', epochs=None):
-    """Consulta vector de estado desde SPICE usando el kernel que está cargado en el sistema.
+    """Consulta vectores de estado desde SPICE usando kernels cargados.
 
-    El kernel que viene por defecto (DE430) tiene una precisión de 1 km para la Tierra. Úselo 
-    solamente para propósitos de demostración.
+    El kernel por defecto (DE430) tiene una precision de ~1 km para la Tierra.
 
-    Opciones:
-        id = '399', location = '@0': string
-            IDs del cuerpo y de la ubicación con respecto a la que se quiere obtener la posición
-        epochs: entradas comunes de Horizons.
-        Se puede pasar una epoca como una única fecha o una lista de fechas.
+    Parameters
+    ----------
+    id : str, optional
+        Identificador del cuerpo.
+    location : str, optional
+        Identificador del observador.
+    epochs : str | list | dict | float | int, optional
+        Epoca(s) de consulta. Puede ser una fecha o una lista de fechas.
 
-    Devuelve:
-        tabla, ts, data:
-            Resultados.
+    Returns
+    -------
+    data : numpy.ndarray
+        Vector(es) de estado en SI.
+    ts : numpy.ndarray
+        Epocas en JD.
+    df : pandas.DataFrame | numpy.ndarray
+        DataFrame con columnas x, y, z, vx, vy, vz.
+
+    Examples
+    --------
+    >>> data, ts, df = consulta_spice(id='399', location='@0', epochs='2024-01-01 12:00:00')
     """
     # verifica el formato de las épocas
     if isinstance(epochs,dict):
@@ -386,7 +468,25 @@ def consulta_spice(id='399', location='@0', epochs=None):
     return data, np.array(epochs), df
 
 def consulta_propiedad(id='399',propiedad='masa',nvalues=1):
-    """Permite obtener propiedades de los kernels TPC
+    """Obtiene propiedades de los kernels TPC.
+
+    Parameters
+    ----------
+    id : str, optional
+        Identificador del cuerpo.
+    propiedad : str, optional
+        Nombre de la propiedad (por defecto 'masa').
+    nvalues : int, optional
+        Numero de valores solicitados para propiedades no escalares.
+
+    Returns
+    -------
+    float | numpy.ndarray
+        Valor(es) de la propiedad solicitada.
+
+    Examples
+    --------
+    >>> masa_tierra = consulta_propiedad(id='399', propiedad='masa')
     """
     # Obtiene kernels si no se han descargado
     if not os.path.isfile('pymcel/data/kernels.txt'):
@@ -405,33 +505,31 @@ def consulta_propiedad(id='399',propiedad='masa',nvalues=1):
 
     return valor
 
-#############################################################
-# RUTINAS DE GRAFICACIÓN
-#############################################################
 def fija_ejes_proporcionales(ax,values=(),margin=0,xcm=None,ycm=None,xmin=None,ymin=None):
-    """Ajusta los ejes para hacerlos proporcionales de acuerdo a un
-    conjunto de valores.
+    """Ajusta los ejes para mantener proporciones en 2D.
 
-    Normalmente esta tarea es realizada ax.set_aspect('equal','box')
-    pero este comando solo se puede ejecutar después de que se han
-    graficado los datos.  Esta rutina se puede ejecutar antes, si se
-    pasan (como una tupla), todos los datos que van en el gráfico.
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Eje donde se aplica el ajuste.
+    values : tuple, optional
+        Tupla con datos que definen el rango (se convierten a arrays).
+    margin : float, optional
+        Margen relativo alrededor del grafico.
+    xcm, ycm : float, optional
+        Centro del rango en x e y. Si es `None`, se usa el centro de los datos.
+    xmin, ymin : float, optional
+        Fuerza el limite inferior en x o y, manteniendo el rango actual.
 
-    Args:
-      ax (matplotlib.axes): axes de matplotlib.
+    Returns
+    -------
+    tuple
+        Tupla con limites `(xlims, ylims)`.
 
-    Keyword Args:
-      values (tuple): tupla de datos.
-          Los datos deben corresponder a objetos de que puedan
-          convertirse en arreglos de numpy. Si no se pasa nada se
-          usan los valores en axes.
-
-      margin (float): margen alrededor del gráfico.
-          En unidades del (ancho o alto del mismo)
-
-    Returns:
-      (xlims,ylims) (tuple,tuple): Límites en x e y.
-
+    Examples
+    --------
+    >>> fija_ejes_proporcionales(ax, rs)
+    >>> xrango, yrango = fija_ejes_proporcionales(ax, valores, xcm=0)
     """
     
     #values
@@ -477,16 +575,21 @@ def fija_ejes_proporcionales(ax,values=(),margin=0,xcm=None,ycm=None,xmin=None,y
     return ax.get_xlim(),ax.get_ylim()
 
 def encuentra_rangos(rs):
-    """Encuentra los rangos de los datos en un conjunto de datos
-    tridimensionales.
+    """Calcula rangos en x, y, z para datos 3D.
 
-    Args:
-      rs (array): arreglo de numpy con los datos.
-          Los datos deben ser tridimensionales.
+    Parameters
+    ----------
+    rs : numpy.ndarray
+        Arreglo 2D o 3D con coordenadas `(x, y, z)`.
 
-    Returns:
-      (xlims,ylims,zlims) (tuple,tuple,tuple): Límites en x, y, z.
+    Returns
+    -------
+    tuple
+        `(xlims, ylims, zlims)` con limites centrados y de igual escala.
 
+    Examples
+    --------
+    >>> rangos = encuentra_rangos(rs)
     """
     cube = len(rs.shape)
 
@@ -513,23 +616,23 @@ def encuentra_rangos(rs):
             [z_middle - plot_radius, z_middle + plot_radius])
 
 def fija_ejes3d_proporcionales(ax,rangos=None):
-    """Ajusta los ejes en 3d para hacelos proporcionales.
+    """Ajusta los ejes en 3D para que tengan la misma escala.
 
-    Hace que los ejes de un gráfico en 3d tengan la misma escala, de
-    modo que las esferas aparezcan como esferas, los cubos como cubos
-    y así sucesivamente.
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Eje 3D de matplotlib.
+    rangos : tuple, optional
+        Rangos `(xlims, ylims, zlims)` precomputados.
 
-    Esta es una de las soluciones alternativas para los comandos de
-    matplotlib ax.set_aspect('equal') and ax.axis('equal') que no
-    funcionan en 3D.
+    Returns
+    -------
+    tuple
+        Limites `(xlims, ylims, zlims)` aplicados al eje.
 
-    Args:
-      ax (matplotlib.axes): axis de matplotlib.
-          Este debe ser el axis donde esta la figura.
-    
-    References: 
-      tomado originalmente de https://stackoverflow.com/a/31364297
-
+    Examples
+    --------
+    >>> fija_ejes3d_proporcionales(ax)
     """
     
     x_limits = ax.get_xlim3d()
@@ -562,6 +665,28 @@ def fija_ejes3d_proporcionales(ax,rangos=None):
     return ax.get_xlim3d(),ax.get_ylim3d(),ax.get_zlim3d()
 
 def plot_ncuerpos_3d(rs,vs=None,tipo='matplotlib',**opciones):
+    """Grafica trayectorias 3D de un sistema de N cuerpos.
+
+    Parameters
+    ----------
+    rs : numpy.ndarray
+        Posiciones con forma `(N, Nt, 3)`.
+    vs : numpy.ndarray, optional
+        Velocidades (no se usan para el grafico, se mantiene por API).
+    tipo : {'matplotlib', 'plotly'}, optional
+        Motor de graficacion.
+    **opciones
+        Opciones del trazado (matplotlib o plotly segun `tipo`).
+
+    Returns
+    -------
+    matplotlib.figure.Figure | plotly.graph_objects.Figure
+        Figura generada.
+
+    Examples
+    --------
+    >>> fig = plot_ncuerpos_3d(rps, vps)
+    """
 
     #Número de partículas
     N=rs.shape[0]
@@ -626,6 +751,30 @@ def plot_ncuerpos_3d(rs,vs=None,tipo='matplotlib',**opciones):
 
 from scipy.interpolate import interp1d
 def plot_doscuerpos_3d(rs,vs=None,tipo='matplotlib',ts=None,**opciones):
+    """Grafica la trayectoria 3D relativa de dos cuerpos.
+
+    Parameters
+    ----------
+    rs : numpy.ndarray
+        Posiciones con forma `(Nt, 3)`.
+    vs : numpy.ndarray, optional
+        Velocidades asociadas (no se usan para el grafico).
+    tipo : {'matplotlib', 'plotly'}, optional
+        Motor de graficacion.
+    ts : numpy.ndarray, optional
+        Tiempos para interpolacion suave si se proporciona.
+    **opciones
+        Opciones del trazado (matplotlib o plotly segun `tipo`).
+
+    Returns
+    -------
+    matplotlib.figure.Figure | plotly.graph_objects.Figure
+        Figura generada.
+
+    Examples
+    --------
+    >>> fig = plot_doscuerpos_3d(rs, vs, tipo='matplotlib')
+    """
 
     #Número de partículas
     N=rs.shape[0]
@@ -696,17 +845,22 @@ def plot_doscuerpos_3d(rs,vs=None,tipo='matplotlib',ts=None,**opciones):
 
     return fig
 
-#############################################################
-# RUTINAS GENERALES ÚTILES
-#############################################################
 def haversine(lon1, lat1, lon2, lat2):
-    """Calcula la distancia angular entre dos puntos sobre una esfera
-    una vez se han especificado los valores de la longitud y latitud
-    de los puntos.
+    """Calcula la distancia angular entre dos puntos sobre una esfera.
 
-    La rutina usa la formula de Haversine.
+    Parameters
+    ----------
+    lon1, lat1, lon2, lat2 : float
+        Longitudes y latitudes en grados.
 
-    Tomado de: https://stackoverflow.com/a/29546836    
+    Returns
+    -------
+    float
+        Distancia angular en grados.
+
+    Examples
+    --------
+    >>> haversine(-75.6, 6.2, -74.1, 4.6)
     """
     
     lon1, lat1, lon2, lat2 = map(np.radians,[lon1, lat1, lon2, lat2])
@@ -720,10 +874,48 @@ def haversine(lon1, lat1, lon2, lat2):
     return np.degrees(c)
 
 def calcula_discriminante(a,b,c):
+    """Calcula el discriminante de un polinomio cuadratico.
+
+    Parameters
+    ----------
+    a, b, c : float
+        Coeficientes del polinomio $ax^2 + bx + c$.
+
+    Returns
+    -------
+    float
+        Discriminante $b^2 - 4ac$.
+
+    Examples
+    --------
+    >>> calcula_discriminante(1, -2, -3)
+    """
     disc=b**2-4*a*c
     return disc
 
 def coeficientes_fourier(funcion,T,k,args=()):
+    """Calcula coeficientes de Fourier para una funcion periodica.
+
+    Parameters
+    ----------
+    funcion : callable
+        Funcion a expandir, `f(t, *args)`.
+    T : float
+        Periodo de la funcion.
+    k : int
+        Numero de armonicos.
+    args : tuple, optional
+        Argumentos adicionales para `funcion`.
+
+    Returns
+    -------
+    tuple
+        Listas `(As, Bs)` con coeficientes coseno y seno.
+
+    Examples
+    --------
+    >>> As, Bs = coeficientes_fourier(f, T, k)
+    """
     #Parametro omega
     w=2*pi/T
     
@@ -740,6 +932,24 @@ def coeficientes_fourier(funcion,T,k,args=()):
     return As,Bs
 
 def rota_puntos(R,x,y,z):
+    """Rota un conjunto de puntos con una matriz de rotacion.
+
+    Parameters
+    ----------
+    R : array-like
+        Matriz de rotacion 3x3.
+    x, y, z : array-like
+        Coordenadas de los puntos.
+
+    Returns
+    -------
+    tuple
+        Coordenadas rotadas `(xp, yp, zp)`.
+
+    Examples
+    --------
+    >>> xps, yps, zps = rota_puntos(Rz, xs, ys, zs)
+    """
     N=len(x)
     xp=zeros_like(x)
     yp=zeros_like(y)
@@ -749,11 +959,49 @@ def rota_puntos(R,x,y,z):
     return xp,yp,zp
 
 def polinomio_segundo_grado(coeficientes,x,y):
+    """Evalua un polinomio de segundo grado en x e y.
+
+    Parameters
+    ----------
+    coeficientes : array-like
+        Coeficientes `(A, B, C, D, E, F)`.
+    x, y : array-like
+        Variables independientes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Valores del polinomio $Ax^2 + Bxy + Cy^2 + Dx + Ey + F$.
+
+    Examples
+    --------
+    >>> Pxpsyps = polinomio_segundo_grado(coeficientes, xps, yps)
+    """
     A,B,C,D,E,F=coeficientes
     P=A*x**2+B*x*y+C*y**2+D*x+E*y+F
     return P
 
 def puntos_conica(p,e,df=0.1):
+    """Genera puntos de una conica en coordenadas cartesianas.
+
+    Parameters
+    ----------
+    p : float
+        Semilatus rectum.
+    e : float
+        Excentricidad.
+    df : float, optional
+        Separacion angular en radianes para evitar singularidades.
+
+    Returns
+    -------
+    tuple
+        Arreglos `(xs, ys, zs)` con los puntos de la conica.
+
+    Examples
+    --------
+    >>> xs, ys, zs = puntos_conica(p, e)
+    """
 
     #Compute fmin,fmax
     if e<1:
@@ -784,6 +1032,28 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
                         df=0.1,
                         elev=30,azim=60,
                         figreturn=False):
+    """Grafica una conica 3D a partir de elementos orbitales clasicos.
+
+    Parameters
+    ----------
+    p, e, i, Omega, omega : float
+        Elementos orbitales (angulos en grados).
+    df : float, optional
+        Separacion angular para evitar singularidades.
+    elev, azim : float, optional
+        Angulos de vista del grafico 3D.
+    figreturn : bool, optional
+        Si `True`, devuelve la figura.
+
+    Returns
+    -------
+    matplotlib.figure.Figure | None
+        Figura generada si `figreturn=True`.
+
+    Examples
+    --------
+    >>> fig = conica_de_elementos(p, e, i*180/pi, W*180/pi, w*180/pi, figreturn=True)
+    """
 
     #Convierte elementos angulares en radianes
     p=float(p)
@@ -865,6 +1135,26 @@ def conica_de_elementos(p=10.0,e=0.8,i=0.0,Omega=0.0,omega=0.0,
     if figreturn:return fig
 
 def ncuerpos_a_pandas(ts,rs,vs):
+    """Convierte una solucion N-cuerpos a un DataFrame de pandas.
+
+    Parameters
+    ----------
+    ts : numpy.ndarray
+        Arreglo de tiempos.
+    rs : numpy.ndarray
+        Posiciones con forma `(N, Nt, 3)`.
+    vs : numpy.ndarray
+        Velocidades con forma `(N, Nt, 3)`.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Tabla con columnas `Particula`, `tiempo`, `x`, `y`, `z`, `vx`, `vy`, `vz`.
+
+    Examples
+    --------
+    >>> df = ncuerpos_a_pandas(ts, rs, vs)
+    """
     Np = len(rs[:,0,0])
     Nt = len(rs[0,:,0])
     tabla = np.zeros((Np*Nt, 8))
@@ -877,6 +1167,28 @@ def ncuerpos_a_pandas(ts,rs,vs):
     return df
 
 def edm_ncuerpos(Y,t,N=2,mus=[]):    
+    """Ecuaciones de movimiento para N cuerpos (forma directa).
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Vector de estado concatenado `(r1, r2, ..., v1, v2, ...)`.
+    t : float
+        Tiempo.
+    N : int, optional
+        Numero de cuerpos.
+    mus : list, optional
+        Masas (o parametros gravitacionales) de cada cuerpo.
+
+    Returns
+    -------
+    numpy.ndarray
+        Derivada temporal `dY/dt`.
+
+    Examples
+    --------
+    >>> dY = edm_ncuerpos(Y, t, N=3, mus=mus)
+    """
     dYdt=zeros(6*N)
 
     #Primer conjunto de ecuaciones
@@ -894,7 +1206,29 @@ def edm_ncuerpos(Y,t,N=2,mus=[]):
     return dYdt
 
 def edm_ncuerpos_eficiente(Y,t,N=2,mus=[]):
-    """Esta rutina fue mejorada por Simón Echeverri, Astronomía UdeA
+    """Ecuaciones de movimiento N-cuerpos (version eficiente).
+
+    Esta rutina fue mejorada por Simon Echeverri, Astronomia UdeA.
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Vector de estado concatenado.
+    t : float
+        Tiempo.
+    N : int, optional
+        Numero de cuerpos.
+    mus : list, optional
+        Masas (o parametros gravitacionales) de cada cuerpo.
+
+    Returns
+    -------
+    list
+        Derivadas concatenadas en formato plano.
+
+    Examples
+    --------
+    >>> dY = edm_ncuerpos_eficiente(Y, t, N=3, mus=mus)
     """
 
     dY=Y[3*N:]
@@ -913,6 +1247,22 @@ def edm_ncuerpos_eficiente(Y,t,N=2,mus=[]):
     return [*dY,*(dydt.flatten())] 
 
 def sistema_a_Y(sistema):
+    """Convierte un sistema de particulas a un vector de estado.
+
+    Parameters
+    ----------
+    sistema : list[dict]
+        Lista de particulas con claves `m`, `r`, `v`.
+
+    Returns
+    -------
+    tuple
+        `(N, mus, Y0s)` con numero de particulas, masas y estado inicial.
+
+    Examples
+    --------
+    >>> N, mus, Y0s = sistema_a_Y(sistema)
+    """
     mus=[]
     r0s=[]
     v0s=[]
@@ -929,6 +1279,26 @@ def sistema_a_Y(sistema):
     return N,mus,Y0s
 
 def solucion_a_estado(solucion,Nparticulas,Ntiempos):
+    """Convierte una solucion plana a arreglos de posiciones y velocidades.
+
+    Parameters
+    ----------
+    solucion : numpy.ndarray
+        Solucion plana con todas las coordenadas.
+    Nparticulas : int
+        Numero de particulas.
+    Ntiempos : int
+        Numero de tiempos.
+
+    Returns
+    -------
+    tuple
+        `(rs, vs)` con forma `(N, Nt, 3)`.
+
+    Examples
+    --------
+    >>> rs, vs = solucion_a_estado(solucion, N, Nt)
+    """
     rs=zeros((Nparticulas,Ntiempos,3))
     vs=zeros((Nparticulas,Ntiempos,3))
     for i in range(Nparticulas):
@@ -937,6 +1307,24 @@ def solucion_a_estado(solucion,Nparticulas,Ntiempos):
     return rs,vs
 
 def ncuerpos_solucion(sistema,ts):
+    """Resuelve el problema N-cuerpos y calcula constantes.
+
+    Parameters
+    ----------
+    sistema : list[dict]
+        Lista de particulas con `m`, `r`, `v`.
+    ts : numpy.ndarray
+        Tiempos de integracion.
+
+    Returns
+    -------
+    tuple
+        `(rs, vs, rps, vps, constantes)`.
+
+    Examples
+    --------
+    >>> rs, vs, rps, vps, constantes = ncuerpos_solucion(sistema, ts)
+    """
     #Condiciones iniciales
     N,mus,Y0s=sistema_a_Y(sistema)
     
@@ -992,6 +1380,26 @@ def ncuerpos_solucion(sistema,ts):
     return rs,vs,rps,vps,constantes
 
 def edm_dos_cuerpos(Y,t,mu):
+    """Ecuaciones de movimiento del problema de dos cuerpos.
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Vector de estado `(r, v)` concatenado.
+    t : float
+        Tiempo.
+    mu : float
+        Parametro gravitacional.
+
+    Returns
+    -------
+    numpy.ndarray
+        Derivadas concatenadas `(dr/dt, dv/dt)`.
+
+    Examples
+    --------
+    >>> dY = edm_dos_cuerpos(Y, t, mu)
+    """
     r = Y[:3]
     v = Y[3:]
     drdt = v
@@ -999,6 +1407,26 @@ def edm_dos_cuerpos(Y,t,mu):
     return np.concatenate([drdt,dvdt])
 
 def doscuerpos_solucion(mu,r,v,ts):
+    """Integra el problema de dos cuerpos.
+
+    Parameters
+    ----------
+    mu : float
+        Parametro gravitacional.
+    r, v : array-like
+        Posicion y velocidad inicial.
+    ts : numpy.ndarray
+        Tiempos de integracion.
+
+    Returns
+    -------
+    tuple
+        `(rs, vs)` con posiciones y velocidades.
+
+    Examples
+    --------
+    >>> rs, vs = doscuerpos_solucion(mu, r, v, ts)
+    """
     X0 = np.concatenate([r,v])
     solucion = odeint(edm_dos_cuerpos,X0,ts,args=(mu,))
     rs = solucion[:,:3]
@@ -1006,6 +1434,26 @@ def doscuerpos_solucion(mu,r,v,ts):
     return rs,vs
 
 def funcion_kepler(G,M=0,e=0):
+    """Evalua la ecuacion de Kepler y sus derivadas.
+
+    Parameters
+    ----------
+    G : float
+        Anomalia excéntrica (eliptica/hiperbolica).
+    M : float, optional
+        Anomalia media.
+    e : float, optional
+        Excentricidad.
+
+    Returns
+    -------
+    tuple
+        `(k, kp, kpp)` con funcion y derivadas.
+
+    Examples
+    --------
+    >>> ks, kps, kpps = funcion_kepler(Gs, M, e)
+    """
     #Parametro sigma
     sigma=+1 if e<1 else -1
     #Funciones cG, sG
@@ -1021,6 +1469,28 @@ def funcion_kepler(G,M=0,e=0):
     return k,kp,kpp
 
 def kepler_kepler(M,e,E0=1.0,delta=1e-5):
+    """Resuelve la ecuacion de Kepler por iteracion simple.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    E0 : float, optional
+        Valor inicial.
+    delta : float, optional
+        Tolerancia.
+
+    Returns
+    -------
+    tuple
+        `(E, error, ni)` solucion, error relativo e iteraciones.
+
+    Examples
+    --------
+    >>> E, error, ni = kepler_kepler(M, e, E0, 1e-8)
+    """
     #Valor inicial de la anomalía excéntrica
     E=E0
     #Valor inicial del error relativo
@@ -1044,6 +1514,28 @@ def kepler_kepler(M,e,E0=1.0,delta=1e-5):
     return Emed,Dn,ni
 
 def kepler_newton(M,e,G0=1,delta=1e-5):
+    """Resuelve la ecuacion de Kepler usando Newton.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    G0 : float, optional
+        Valor inicial.
+    delta : float, optional
+        Tolerancia.
+
+    Returns
+    -------
+    tuple
+        `(G, error, ni)` solucion, error relativo e iteraciones.
+
+    Examples
+    --------
+    >>> E, error, ni = kepler_newton(M, e, E0, 1e-8)
+    """
     #Valor inicial de la anomalía excéntrica
     Gn=G0
     #Valor inicial del error relativo
@@ -1067,6 +1559,26 @@ def kepler_newton(M,e,G0=1,delta=1e-5):
     return Gmed,Dn,ni
 
 def kepler_aproximacion(M,e,orden=1):
+    """Aproxima la solucion de Kepler por serie truncada.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    orden : int, optional
+        Orden de aproximacion (1, 2, 3).
+
+    Returns
+    -------
+    tuple
+        `(E, error, 1)` con aproximacion y error relativo.
+
+    Examples
+    --------
+    >>> E1, error1, _ = kepler_aproximacion(M, e, orden=1)
+    """
     from math import sin
     
     #Formula de acuerdo al orden de aproximacion
@@ -1084,10 +1596,29 @@ def kepler_aproximacion(M,e,orden=1):
     return E,Dn,1
 
 def propaga_estado(sistema,t0,t,verbose=0):
+    """Propaga el estado de un sistema de dos cuerpos a un tiempo t.
+
+    Parameters
+    ----------
+    sistema : list[dict]
+        Dos particulas con claves `m`, `r`, `v`.
+    t0 : float
+        Tiempo inicial.
+    t : float
+        Tiempo final.
+    verbose : int, optional
+        Si es mayor que 0, imprime detalles del calculo.
+
+    Returns
+    -------
+    tuple
+        `(r1, v1, r2, v2, r, v)` estados en el tiempo `t`.
+
+    Examples
+    --------
+    >>> r1, v1, r2, v2, rvec, vvec = propaga_estado(sistema, t0, t)
+    """
     
-    ########################################################
-    # Preparación del cálculo
-    ########################################################
 
     #Condiciones iniciales
     m1=sistema[0]["m"]
@@ -1147,9 +1678,6 @@ def propaga_estado(sistema,t0,t,verbose=0):
         
     if verbose:print(f"M0 = {M0*180/pi}")
 
-    ########################################################
-    # Aquí viene la predicción
-    ########################################################
 
     #Paso 7: Anomalía media en t
     if e==1:
@@ -1197,6 +1725,28 @@ def propaga_estado(sistema,t0,t,verbose=0):
     return r1,v1,r2,v2,r,v
 
 def funcion_universal_kepler(x,M,e,q):
+    """Ecuacion universal de Kepler y sus derivadas.
+
+    Parameters
+    ----------
+    x : float
+        Variable universal.
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    q : float
+        Distancia al periapsis.
+
+    Returns
+    -------
+    tuple
+        `(k, kp, kpp)` funcion y derivadas.
+
+    Examples
+    --------
+    >>> k, kp, kpp = funcion_universal_kepler(x, M, e, q)
+    """
     #Parametro alga
     alfa=(1-e)/q
     #Funcion universal de Kepler
@@ -1206,6 +1756,32 @@ def funcion_universal_kepler(x,M,e,q):
     return k,kp,kpp
 
 def funcion_universal_kepler_s(s,r0,rdot0,beta,mu,M):
+    """Ecuacion universal de Kepler en la variable s.
+
+    Parameters
+    ----------
+    s : float
+        Variable universal.
+    r0 : float
+        Distancia inicial.
+    rdot0 : float
+        Derivada radial inicial.
+    beta : float
+        Parametro auxiliar.
+    mu : float
+        Parametro gravitacional.
+    M : float
+        Anomalia media equivalente.
+
+    Returns
+    -------
+    tuple
+        `(k, kp, kpp)` funcion y derivadas.
+
+    Examples
+    --------
+    >>> k, kp, kpp = funcion_universal_kepler_s(s, r0, rdot0, beta, mu, M)
+    """
     #Variable auxiliar
     u=beta*s**2
     #Series de Stumpff requeridas
@@ -1220,6 +1796,30 @@ def funcion_universal_kepler_s(s,r0,rdot0,beta,mu,M):
     return k,kp,kpp
 
 def propaga_f_g(mu,rvec0,vvec0,t0,t,delta=1e-14,verbose=False):
+    """Propaga un estado usando las funciones de Lagrange f y g.
+
+    Parameters
+    ----------
+    mu : float
+        Parametro gravitacional.
+    rvec0, vvec0 : array-like
+        Estado inicial.
+    t0, t : float
+        Tiempo inicial y final.
+    delta : float, optional
+        Tolerancia del solucionador.
+    verbose : bool, optional
+        Si `True`, imprime detalles.
+
+    Returns
+    -------
+    tuple
+        `(s, f, g, dotf, dotg, rvec, vvec)`.
+
+    Examples
+    --------
+    >>> s, f, g, dotf, dotg, rvec, vvec = propaga_f_g(mu, rvec0, vvec0, t0, t, verbose=True)
+    """
 
     #Calcular r0, rdot0
     r0=norm(rvec0)
@@ -1267,6 +1867,26 @@ def propaga_f_g(mu,rvec0,vvec0,t0,t,delta=1e-14,verbose=False):
     return s,f,g,dotf,dotg,rvec,vvec
 
 def edm_crtbp(Y,t,alfa):
+    """Ecuaciones de movimiento del CRTBP (3D).
+
+    Parameters
+    ----------
+    Y : numpy.ndarray
+        Vector de estado `(r, v)` concatenado.
+    t : float
+        Tiempo.
+    alfa : float
+        Parametro de masa reducido.
+
+    Returns
+    -------
+    numpy.ndarray
+        Derivadas concatenadas `dY/dt`.
+
+    Examples
+    --------
+    >>> dY = edm_crtbp(Y, t, alfa)
+    """
 
     r=Y[:3]
     v=Y[3:]
@@ -1287,6 +1907,26 @@ def edm_crtbp(Y,t,alfa):
     return dYdt
 
 def crtbp_solucion(alfa,ro,vo,ts):
+    """Integra el CRTBP y devuelve estados en marcos rotante e inercial.
+
+    Parameters
+    ----------
+    alfa : float
+        Parametro de masa reducido.
+    ro, vo : array-like
+        Posicion y velocidad inicial.
+    ts : numpy.ndarray
+        Tiempos de integracion.
+
+    Returns
+    -------
+    tuple
+        `(rs_rot, vs_rot, rs_ine, vs_ine, r1_ine, r2_ine)`.
+
+    Examples
+    --------
+    >>> rs_rot, vs_rot, rs_ine, vs_ine, r1_ine, r2_ine = crtbp_solucion(alfa, ro, vo, ts)
+    """
     #Condiciones iniciales
     Yo=concatenate((array(ro),array(vo)))
 
@@ -1314,6 +1954,26 @@ def crtbp_solucion(alfa,ro,vo,ts):
     return rs_rot,vs_rot,rs_ine,vs_ine,r1_ine,r2_ine
 
 def constante_jacobi(alfa,r,vel):
+    """Calcula la constante de Jacobi para el CRTBP.
+
+    Parameters
+    ----------
+    alfa : float
+        Parametro de masa reducido.
+    r : array-like
+        Posiciones (N, 3).
+    vel : array-like
+        Velocidades (N, 3).
+
+    Returns
+    -------
+    numpy.ndarray
+        Valores de la constante de Jacobi.
+
+    Examples
+    --------
+    >>> CJ = constante_jacobi(alfa, rs, vs)
+    """
     r=array(r)
     vel=array(vel)
     
@@ -1334,6 +1994,24 @@ def constante_jacobi(alfa,r,vel):
     return CJ
 
 def funcion_puntos_colineales(x,alfa):
+    """Funcion auxiliar para puntos colineales del CRTBP.
+
+    Parameters
+    ----------
+    x : float | numpy.ndarray
+        Coordenada x.
+    alfa : float
+        Parametro de masa reducido.
+
+    Returns
+    -------
+    float | numpy.ndarray
+        Valor de la funcion.
+
+    Examples
+    --------
+    >>> fs = funcion_puntos_colineales(xs, alfa)
+    """
     x1=-alfa
     x2=1-alfa
     f=(1-alfa)*(x-x1)/abs(x-x1)**3+alfa*(x-x2)/abs(x-x2)**3-x
@@ -1344,6 +2022,32 @@ def orbitas_crtbp(alfa,ro,vo,
                   xlim=(-1.5,1.5),ylim=(-1.5,1.5),
                   xL=0,yL=0,
                  ):
+    """Grafica orbitas del CRTBP en el plano.
+
+    Parameters
+    ----------
+    alfa : float
+        Parametro de masa reducido.
+    ro, vo : array-like
+        Condiciones iniciales.
+    T : float, optional
+        Tiempo total.
+    Nt : int, optional
+        Numero de pasos.
+    xlim, ylim : tuple, optional
+        Limites del grafico.
+    xL, yL : float, optional
+        Punto de Lagrange a marcar.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figura generada.
+
+    Examples
+    --------
+    >>> fig = orbitas_crtbp(alfa, ro, vo)
+    """
     #Tiempos de integración
     ts=linspace(0,T,Nt)
     #Solución numérica a la ecuación de movimiento
@@ -1371,6 +2075,34 @@ def orbitas_crtbp3d(alfa,ro,vo,
                   xL=0,yL=0,zL=0,
                   elevation=10,azimuth=-80
                  ):
+    """Grafica orbitas del CRTBP en 3D.
+
+    Parameters
+    ----------
+    alfa : float
+        Parametro de masa reducido.
+    ro, vo : array-like
+        Condiciones iniciales.
+    T : float, optional
+        Tiempo total.
+    Nt : int, optional
+        Numero de pasos.
+    xlim, ylim, zlim : tuple, optional
+        Limites del grafico.
+    xL, yL, zL : float, optional
+        Punto de Lagrange a marcar.
+    elevation, azimuth : float, optional
+        Angulos de vista.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figura generada.
+
+    Examples
+    --------
+    >>> fig = orbitas_crtbp3d(alfa, ro, vo)
+    """
     #Tiempos de integración
     ts=linspace(0,T,Nt)
     #Solución numérica a la ecuación de movimiento
@@ -1393,6 +2125,32 @@ def orbitas_crtbp3d(alfa,ro,vo,
     return fig
 
 def accion_hamilton(lagrangiano,q0,eta,epsilon,t1,t2,**opciones_de_L):
+    """Evalua el funcional de accion para una variacion dada.
+
+    Parameters
+    ----------
+    lagrangiano : callable
+        Funcion L(q, dqdt, t, **opciones_de_L).
+    q0 : callable
+        Trayectoria base.
+    eta : callable
+        Variacion.
+    epsilon : float
+        Amplitud de la variacion.
+    t1, t2 : float
+        Intervalo de integracion.
+    **opciones_de_L
+        Parametros adicionales del lagrangiano.
+
+    Returns
+    -------
+    float
+        Valor de la accion.
+
+    Examples
+    --------
+    >>> S = accion_hamilton(lagrangiano_pendulo_simple, q0, eta, epsilon, t1, t2)
+    """
     
     #Definimos las función con su variación
     q=lambda t:q0(t,**opciones_de_L)+epsilon*eta(t,**opciones_de_L)
@@ -1410,18 +2168,92 @@ def accion_hamilton(lagrangiano,q0,eta,epsilon,t1,t2,**opciones_de_L):
     return S
 
 def Vfuerza(r,**parametros):
+    """Potencial de fuerza central general.
+
+    Parameters
+    ----------
+    r : float | numpy.ndarray
+        Radio.
+    **parametros
+        `mu` y `n` para $V=-mu/r^n$.
+
+    Returns
+    -------
+    float | numpy.ndarray
+        Potencial.
+
+    Examples
+    --------
+    >>> Vs = Vfuerza(rs, mu=mu, n=n)
+    """
     V=-parametros["mu"]/r**parametros["n"]
     return V
 
 def Vcen(r,**parametros):
+    """Potencial centrifugo para un momento angular h.
+
+    Parameters
+    ----------
+    r : float | numpy.ndarray
+        Radio.
+    **parametros
+        `h` momento angular.
+
+    Returns
+    -------
+    float | numpy.ndarray
+        Potencial centrifugo.
+
+    Examples
+    --------
+    >>> Vcens = Vcen(rs, h=h)
+    """
     V=parametros["h"]**2/(2*r**2)
     return V
 
 def Veff(r,Vf,**parametros):
+    """Potencial efectivo $V = V_f + V_{cen}$.
+
+    Parameters
+    ----------
+    r : float | numpy.ndarray
+        Radio.
+    Vf : callable
+        Potencial de fuerza central.
+    **parametros
+        Parametros para `Vf` y `Vcen`.
+
+    Returns
+    -------
+    float | numpy.ndarray
+        Potencial efectivo.
+
+    Examples
+    --------
+    >>> Veffs = Veff(rs, Vfuerza, h=h, mu=mu, n=n)
+    """
     V=Vf(r,**parametros)+Vcen(r,**parametros)
     return V
 
 def estado_a_elementos(mu,x):
+    """Convierte estado cartesiano a elementos orbitales clasicos.
+
+    Parameters
+    ----------
+    mu : float
+        Parametro gravitacional.
+    x : array-like
+        Vector `(r, v)` concatenado.
+
+    Returns
+    -------
+    tuple
+        `(p, e, i, W, w, f)`.
+
+    Examples
+    --------
+    >>> p, e, i, W, w, f = estado_a_elementos(mu, x)
+    """
     #Posición y velocidad del sistema relativo
     rvec=x[:3]
     vvec=x[3:]
@@ -1455,6 +2287,24 @@ def estado_a_elementos(mu,x):
     return p,e,i,W,w,f
 
 def elementos_a_estado(mu,elementos):
+    """Convierte elementos orbitales clasicos a estado cartesiano.
+
+    Parameters
+    ----------
+    mu : float
+        Parametro gravitacional.
+    elementos : array-like
+        `(p, e, i, W, w, f)`.
+
+    Returns
+    -------
+    numpy.ndarray
+        Vector `(x, y, z, vx, vy, vz)`.
+
+    Examples
+    --------
+    >>> x = elementos_a_estado(mu, array([p, e, i, W, w, f]))
+    """
     #Extrae elementos
     p,e,i,W,w,f=elementos
     
@@ -1479,6 +2329,28 @@ def elementos_a_estado(mu,elementos):
     return array([x,y,z,vx,vy,vz])
 
 def metodo_newton(f,x0=1,delta=1e-5,args=()):
+    """Metodo de Newton para resolver f(x)=0.
+
+    Parameters
+    ----------
+    f : callable
+        Funcion que devuelve `(f, f')`.
+    x0 : float, optional
+        Valor inicial.
+    delta : float, optional
+        Tolerancia.
+    args : tuple, optional
+        Argumentos adicionales para `f`.
+
+    Returns
+    -------
+    tuple
+        `(x, error, ni)`.
+
+    Examples
+    --------
+    >>> x, error, ni = metodo_newton(funcion_kepler, x0=E0, delta=1e-8, args=(M, e))
+    """
     #Valor inicial de la anomalía excéntrica
     xn=x0
     #Valor inicial del error relativo
@@ -1499,6 +2371,30 @@ def metodo_newton(f,x0=1,delta=1e-5,args=()):
     return xmed,Dn,ni
 
 def metodo_laguerre(f,x0=1,delta=1e-5,args=(),eta=5):
+    """Metodo de Laguerre para resolver f(x)=0.
+
+    Parameters
+    ----------
+    f : callable
+        Funcion que devuelve `(f, f', f'')`.
+    x0 : float, optional
+        Valor inicial.
+    delta : float, optional
+        Tolerancia.
+    args : tuple, optional
+        Argumentos adicionales para `f`.
+    eta : int, optional
+        Parametro del metodo.
+
+    Returns
+    -------
+    tuple
+        `(x, error, ni)`.
+
+    Examples
+    --------
+    >>> E, error, ni = metodo_laguerre(funcion_kepler, x0=E0, delta=1e-8, args=(M, e))
+    """
     #Varifica que el valor inicial sea apropiado
     disc=-1
     mi=0
@@ -1537,6 +2433,24 @@ def metodo_laguerre(f,x0=1,delta=1e-5,args=(),eta=5):
     return xmed,Dn,ni+mi-1
 
 def kepler_semianalitico(M,e):
+    """Solucion semianalitica de la ecuacion de Kepler.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+
+    Returns
+    -------
+    tuple
+        `(E, error, ni)`.
+
+    Examples
+    --------
+    >>> E, error, ni = kepler_semianalitico(M, e)
+    """
     from math import sin,cos,pi
     
     #Casos extremos
@@ -1587,6 +2501,28 @@ def kepler_semianalitico(M,e):
     return E,Dn,1
 
 def kepler_eserie(M,e,delta=0,orden=1):
+    """Solucion de Kepler por serie de potencias en e.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    delta : float, optional
+        Tolerancia.
+    orden : int, optional
+        Orden de la serie si `delta=0`.
+
+    Returns
+    -------
+    tuple
+        `(E, error, n)`.
+
+    Examples
+    --------
+    >>> E8, error8, ni = kepler_eserie(M, e, orden=8)
+    """
     nfac=1
     En=M
     Dn=1
@@ -1617,6 +2553,26 @@ def kepler_eserie(M,e,delta=0,orden=1):
     return En,Dn,n
 
 def kepler_bessel(M,e,delta):
+    """Solucion de Kepler usando expansion en funciones de Bessel.
+
+    Parameters
+    ----------
+    M : float
+        Anomalia media.
+    e : float
+        Excentricidad.
+    delta : float
+        Tolerancia.
+
+    Returns
+    -------
+    tuple
+        `(E, error, n)`.
+
+    Examples
+    --------
+    >>> E, error, ni = kepler_bessel(M, e, 1e-8)
+    """
     Dn=1
     n=1
     En=M
@@ -1630,10 +2586,53 @@ def kepler_bessel(M,e,delta):
     return En,Dn,n
 
 def serie_stumpff(t,k,N=15):
+    """Calcula la serie de Stumpff $c_k(t)$.
+
+    Parameters
+    ----------
+    t : float
+        Argumento de la serie.
+    k : int
+        Orden.
+    N : int, optional
+        Numero de terminos.
+
+    Returns
+    -------
+    float
+        Valor de la serie.
+
+    Examples
+    --------
+    >>> c0 = serie_stumpff(t, 0)
+    """
     sk=lambda n:t/((2*n+k+1)*(2*n+k+2))*(1-sk(n+1)) if n<N else 0
     return (1-sk(0))/math.factorial(k)
 
 def plot_elipse(e=0.5,a=10.0):
+    """Grafica una elipse en el plano.
+
+    Parameters
+    ----------
+    e : float, optional
+        Excentricidad, debe ser menor que 1.
+    a : float, optional
+        Semieje mayor, debe ser positivo.
+
+    Returns
+    -------
+    None
+        Muestra la figura con `matplotlib`.
+
+    Raises
+    ------
+    ValueError
+        Si `e >= 1` o `a <= 0`.
+
+    Examples
+    --------
+    >>> plot_elipse(e=0.3, a=5)
+    """
 
     e=float(e)
     a=float(a)
@@ -1681,6 +2680,29 @@ def plot_elipse(e=0.5,a=10.0):
 
 #Definimos el algoritmo como una rutina
 def plot_hiperbola(e=1.5,a=-10):
+    """Grafica una hipérbola en el plano.
+
+    Parameters
+    ----------
+    e : float, optional
+        Excentricidad, debe ser mayor que 1.
+    a : float, optional
+        Semieje mayor, debe ser negativo.
+
+    Returns
+    -------
+    None
+        Muestra la figura con `matplotlib`.
+
+    Raises
+    ------
+    ValueError
+        Si `e <= 1` o `a >= 0`.
+
+    Examples
+    --------
+    >>> plot_hiperbola(e=1.7, a=-8)
+    """
 
     e=float(e)
     a=float(a)
@@ -2102,7 +3124,22 @@ def obtiene_elementos_asteroide(id, verbose=True):
     return t0,means,Cov
 
 def axis_equal(fig):
-    """Ajusta los ejes de una figura 3D de plotly para que tengan la misma escala
+    """Ajusta los ejes 3D de una figura de plotly para que tengan la misma escala.
+
+    Parameters
+    ----------
+    fig : plotly.graph_objects.Figure
+        Figura con trazas `Scatter3d`.
+
+    Returns
+    -------
+    None
+        Modifica `fig` in-place.
+
+    Examples
+    --------
+    >>> fig = plot_ncuerpos_3d(rps, vps)
+    >>> axis_equal(fig)
     """
     # Calculate the range for all axes using fig.data, excluding the sphere data
     x_data = [trace.x for trace in fig.data if isinstance(trace, go.Scatter3d)]
@@ -2152,424 +3189,187 @@ def fig_body(R, mesh3d_opts=dict(), lighting_opts=dict()):
     fig.update_traces(lighting=lighting_opts_def)
     return fig
 
-# ############################################################
-# Plot Grid
-# ############################################################
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import numpy as np
+def C(z):
+    """Funcion de Stumpff $C(z)$.
 
-class UtilPlot(object):
+    Parameters
+    ----------
+    z : float
+        Argumento de la funcion.
+
+    Returns
+    -------
+    float
+        Valor de $C(z)$.
+
+    Examples
+    --------
+    >>> C(0.1)
     """
-    This abstract class contains useful methods for the module plot
-    """ 
-        
-    
-    def mantisaExp(x):
-        """
-        Calculate the mantisa and exponent of a number.
-        
-        Parameters:
-            x: number, float.
-            
-        Return:
-            man: mantisa, float
-            exp: exponent, float.
-            
-        Examples:
-            m,e=mantisaExp(234.5), returns m=2.345, e=2
-            m,e=mantisaExp(-0.000023213), return m=-2.3213, e=-5
-        """
-        xa=np.abs(x)
-        s=np.sign(x)
-        try:
-            exp=int(np.floor(np.log10(xa)))
-            man=s*xa/10**(exp)
-        except OverflowError as e:
-            man=exp=0
-        return man,exp
-    
-class PlotGrid(object):
-    r"""
-    Class PlotGrid
-    
-    Create a grid of plots showing the projection of a N-dimensional
-    
-    Initialization attributes:
-        dproperties: list of properties to be shown, dictionary of dictionaries (N entries)
-            keys: label of attribute, ex. "q"
-            dictionary: 
-                label: label used in axis, string
-                range: range for property, tuple (2)
-        
-    Optional initialization attributes:
-        figsize=3 : base size for panels (the size of figure will be M x figsize), integer
-        fontsize=10 : base fontsize, int
-        direction='out' : direction of ticks in panels.
-    
-    Other attributes:
-        N: number of properties, int
-        M: size of grid matrix (M=N-1), int
-        fw: figsize
-        fs: fontsize
-        fig: figure handle, figure
-        axs: matrix with subplots, axes handles (MxM)
-        axp: matrix with subplots, dictionary of dictionaries
-        properties: list of properties labels, list of strings (N)
-    
-    Methods:
-        tightLayout
-        setLabels
-        setRanges
-        setTickParams
-        
-        plotHist
-        scatterPlot
 
-    Example:
-        # Read data
-        df_neas=pd.read_json(Util.packageFile("data/nea_extended.json.gz"))
-        df_neas["q"]=df_neas["a"]*(1-df_neas["e"])
+    if z > 0:
+        return (1 - np.cos(np.sqrt(z))) / z
+    elif z < 0:
+        return (np.cosh(np.sqrt(-z)) - 1) / (-z)
+    else:
+        return 1 / 2
 
-        # Prepare numpy array
-        data_neas=np.array(df_neas[["q","e","i","Node","Peri","M"]])
-        
-        # Describe properties
-        properties=dict(
-            q=dict(label=r"$q$ [au]",range=[0,1.3]),
-            e=dict(label=r"$e$",range=None),
-            i=dict(label=r"$i$",range=[0,25]),
-            W=dict(label=r"$\Omega$",range=None),
-            w=dict(label=r"$\omega$",range=None),
-            M=dict(label=r"$M$",range=None),
-        )
+def S(z):
+    """Funcion de Stumpff $S(z)$.
 
-        # Create PlotGrid
-        G=PlotGrid(properties,figsize=2)
+    Parameters
+    ----------
+    z : float
+        Argumento de la funcion.
 
-        # Plot histogram
-        args=dict(alpha=1,bins=50,colorbar=True,cmap="rainbow")
-        hist=G.plotHist(data_neas,**args)
-        
-        # Plot scatter
-        args=dict(c='r',marker='.',s=2,edgecolors='none',alpha=0.3)
-        G.scatterPlot(data_neas,**args)
+    Returns
+    -------
+    float
+        Valor de $S(z)$.
 
-        G.fig.suptitle(f"{len(data_neas)} NEAs MPC",x=0.5,y=0.8,ha='left',fontsize=18)
-        G.fig.savefig("figs/NEAs-MPC.png")
-
-    Developed by Jorge I. Zuluaga, 2024
+    Examples
+    --------
+    >>> S(0.1)
     """
-    
-    def __init__(self,properties,figsize=3,fontsize=10,direction='out'):
 
-        """
-        {Descripción breve de la función o clase.}
+    if z > 0:
+        return (np.sqrt(z) - np.sin(np.sqrt(z))) / (np.sqrt(z)) ** 3
+    elif z < 0:
+        return (np.sinh(np.sqrt(-z)) - np.sqrt(-z)) / (np.sqrt(-z)) ** 3
+    else:
+        return 1 / 6
 
-        Parameters
-        ----------
-        param1 : type
-            Descripción de lo que representa este parámetro.
-        param2 : type
-            Descripción de lo que representa este parámetro.
+def solucion_lambert(P1, P2, tf, mu=1, direccion='pro', tol=1e-6, maxiter=10000):
+    """Resuelve el problema de Lambert para unir dos puntos en un tiempo dado.
 
-        Returns
-        -------
-        return_type
-            Descripción del valor de retorno.
+    Adaptado de: https://github.com/iscoooooo/Porkchop-Plot-Generator.
+    Las formulas estan basadas en "Orbital Mechanics for Engineering Students"
+    (Howard D. Curtis, 4th ed.).
 
-        Raises
-        ------
-        ExceptionType
-            Descripción de las condiciones bajo las cuales se genera esta excepción.
+    Parameters:
+    P1, P2 : np.array
+        Posiciones iniciales
+    tf : float
+        Tiempo de vuelo
+    mu = 1 : float
+        Parámetro gravitacional.
+    tol = 1e-6 : int, optional
+        Tolerancia para el solucionador de Newton
+    maxiter = 10000: int, optional
+        Máximo número de iteraciones para el solucionador de Newton
+    direccion = 'pro' : str, optional
+        'pro' para la órbita prograda y 'retro' para la órbita retrograda
 
-        Methods
-        -------
-        method1(arg1, arg2)
-            Descripción del primer método de la clase.
-        method2(arg1)
-            Descripción del segundo método de la clase.
+    Returns:
+    V1, V2 : np.array
+        Velocidades inicial y final
 
-        Attributes
-        ----------
-        attribute1 : type
-            Descripción de lo que representa este atributo.
-        attribute2 : type
-            Descripción de lo que representa este atributo.
+    orbita: dict
+        z: Variable universal (z<0 para órbita hiperbólica)
+        elts: Elementos orbitales de SPICE (q, e, I, Omega, omega, M, t, mu)
+    Examples
+    --------
+    >>> V1, V2, info = solucion_lambert(P1, P2, tf, mu=mu, direccion='pro')
+    """
 
-        Examples
-        --------
-        >>> function_name(arg1, arg2)
-        Resultado esperado o ejemplo de uso de la función.
+    from scipy.optimize import newton
 
-        Notes
-        -----
-        Aquí se pueden incluir detalles adicionales sobre la implementación o el comportamiento de la función o clase.
+    # Distancias
+    r1 = np.linalg.norm(P1)
+    r2 = np.linalg.norm(P2)
 
-        Warnings
-        --------
-        Aquí se pueden agregar advertencias o precauciones importantes relacionadas con el uso de la función o clase.
+    # Ángulo del triángulo espacial
+    theta = np.arccos(np.dot(P1, P2) / (r1 * r2))
+    cross12 = np.cross(P1, P2)
+    if direccion == 'pro':
+        if cross12[2] < 0:
+            theta = 2 * np.pi - theta
+    elif direccion == 'retro':
+        if cross12[2] >= 0:
+            theta = 2 * np.pi - theta
+    else:
+        raise ValueError("Debe indicar la dirección de movimiento ('pro' de P1 a P2 o 'retro' de P1 a P2 por el lado opuesto).")
 
-        See Also
-        --------
-        other_function()
-            Descripción de otras funciones relevantes.
-        another_method()
-            Descripción de otros métodos relevantes.
+    # Función auxiliar
+    A = np.sin(theta) * np.sqrt(r1 * r2 / (1 - np.cos(theta)))
 
-        References
-        ----------
-        Referencia1: Descripción de una fuente o artículo relevante para la función o clase.
-        Referencia2: Descripción de otra fuente o artículo relevante.
+    # Funciones auxiliares
+    def y(z):
+        return r1 + r2 + A * (z * S(z) - 1) / np.sqrt(C(z))
 
-        TODO
-        ----
-        - Tareas pendientes o futuras mejoras que se deben considerar.
-        - Optimización de la función para una mejor eficiencia."""
-        
-        #Basic attributes
-        self.dproperties=properties
-        self.properties=list(properties.keys())
+    def F(z):
+        return (y(z) / C(z)) ** 1.5 * S(z) + A * np.sqrt(y(z)) - np.sqrt(mu) * tf
 
-        #Secondary attributes
-        self.N=len(properties)
-        self.M=self.N-1
-        
-        #Optional properties
-        self.fw=figsize
-        self.fs=fontsize
+    def dFdz(z):
+        if z == 0:
+            return np.sqrt(2) / 40 * y(0) ** 1.5 + A / 8 * (np.sqrt(y(0)) + A * np.sqrt(1 / 2 / y(0)))
+        return (y(z) / C(z)) ** 1.5 * (1 / 2 / z * (C(z) - 3 * S(z) / 2 / C(z)) + 3 * S(z) ** 2 / 4 / C(z)) + A / 8 * (3 * S(z) / C(z) * np.sqrt(y(z)) + A * np.sqrt(C(z) / y(z)))
 
-        #Create figure and axes: it works
-        try:
-            self.fig,self.axs=plt.subplots(
-                self.M,self.M,
-                constrained_layout=True,
-                figsize=(self.M*self.fw,self.M*self.fw),
-                sharex="col",sharey="row"
-            )
-            self.constrained=True
-        except:
-            self.fig,self.axs=plt.subplots(
-                self.M,self.M,
-                figsize=(self.M*self.fw,self.M*self.fw),
-                sharex="col",sharey="row"
-            )
-            self.constrained=False
-            
-        #Create named axis
-        self.axp=dict()
-        for j in range(self.N):
-            propj=self.properties[j]
-            if propj not in self.axp.keys():
-                self.axp[propj]=dict()
-            for i in range(self.N):
-                propi=self.properties[i]
-                if i==j:
-                    continue
-                if propi not in self.axp.keys():
-                    self.axp[propi]=dict()
-                if i<j:
-                    self.axp[propj][propi]=self.axp[propi][propj]
-                    continue
-                self.axp[propj][propi]=self.axs[i-1][j]
-    
-        #Deactivate unused panels
-        for i in range(self.M):
-            for j in range(i+1,self.M):
-                self.axs[i][j].axis("off")
-        
-        #Place ticks
-        for i in range(self.M):
-            for j in range(i+1):
-                self.axs[i,j].tick_params(axis='both',direction=direction)
-        for i in range(self.M):
-            self.axs[i,0].tick_params(axis='y',direction="out")
-            self.axs[self.M-1,i].tick_params(axis='x',direction="out")
-        
-        #Set properties of panels
-        self.setLabels()
-        self.setRanges()
-        self.setTickParams()
-        self.tightLayout()
-    
-    def tightLayout(self):
-        """
-        Tight layout if no constrained_layout was used.
-        
-        Parameters: None
-        
-        Return: None
-        """
-        if self.constrained==False:
-            self.fig.subplots_adjust(wspace=self.fw/100.,hspace=self.fw/100.)
-        self.fig.tight_layout()
-        
-    def setTickParams(self,**args):
-        """
-        Set tick parameters.
-        
-        Parameters: 
-            **args: same arguments as tick_params method, dictionary
-        
-        Return: None
-        """
-        opts=dict(axis='both',which='major',labelsize=0.8*self.fs)
-        opts.update(args)
-        for i in range(self.M):
-            for j in range(self.M):
-                self.axs[i][j].tick_params(**opts)
-        
-    def setRanges(self):
-        """
-        Set ranges in panels according to ranges defined in dparameters.
-        
-        Parameters: None
-        
-        Return: None
-        """
-        for i,propi in enumerate(self.properties):
-            for j,propj in enumerate(self.properties):
-                if j<=i:continue
-                if self.dproperties[propi]["range"] is not None:
-                    if isinstance(self.dproperties[propi]["range"],tuple):
-                        mus = self.dproperties[propi]["range"][0]
-                        cov = self.dproperties[propi]["range"][1]
-                        ipr = self.dproperties[propi]["range"][2]
-                        self.axp[propi][propj].set_xlim(mus[ipr]-4*cov[ipr,ipr]**0.5,mus[ipr]+4*cov[ipr,ipr]**0.5)
-                    else:
-                        self.axp[propi][propj].set_xlim(self.dproperties[propi]["range"])
-                if self.dproperties[propj]["range"] is not None:
-                    if isinstance(self.dproperties[propj]["range"],tuple):
-                        mus = self.dproperties[propj]["range"][0]
-                        cov = self.dproperties[propj]["range"][1]
-                        ipr = self.dproperties[propj]["range"][2]
-                        self.axp[propi][propj].set_ylim(mus[ipr]-4*cov[ipr,ipr]**0.5,mus[ipr]+4*cov[ipr,ipr]**0.5)
-                    else:
-                        self.axp[propi][propj].set_ylim(self.dproperties[propj]["range"])
-    
-    def setLabels(self,**args):
-        """
-        Set labels parameters.
-        
-        Parameters: 
-            **args: common arguments of set_xlabel, set_ylabel and text, dictionary
-        
-        Return: None
-        """
-        opts=dict(fontsize=self.fs)
-        opts.update(args)
-        for i,prop in enumerate(self.properties[:-1]):
-            label=self.dproperties[prop]["label"]
-            self.axs[self.M-1][i].set_xlabel(label,**opts)
-        for i,prop in enumerate(self.properties[1:]):
-            label=self.dproperties[prop]["label"]
-            self.axs[i][0].set_ylabel(label,rotation=90,labelpad=10,**opts)
-        for i in range(1,self.M):
-            label=self.dproperties[self.properties[i]]["label"]
-            self.axs[i-1][i].text(0.5,0.0,label,ha='center',
-                                  transform=self.axs[i-1][i].transAxes,**opts)
-            #270 if you want rotation
-            self.axs[i-1][i].text(0.0,0.5,label,rotation=270,va='center',
-                                  transform=self.axs[i-1][i].transAxes,**opts)
+    # Busca el valor inicial de z para resolver por Newton
+    z = 0.1
+    while F(z) < 0:
+        z += 0.1
+        if z > 1e6:
+            raise ValueError("No pude encontrar un valor inicial apropiado para z.")
 
-        label=self.dproperties[self.properties[0]]["label"]
-        self.axs[0][1].text(0.0,1.0,label,rotation=0,ha='left',va='top',
-                              transform=self.axs[0][1].transAxes,**opts)
+    # Resuelve la ecuación de variable universal
+    z = newton(F, z, tol=tol, maxiter=maxiter)
 
-        label=self.dproperties[self.properties[-1]]["label"]
-        #270 if you want rotation
-        self.axs[-1][-1].text(1.05,0.5,label,rotation=270,ha='left',va='center',
-                              transform=self.axs[-1][-1].transAxes,**opts)
+    # Determina si encontro una solución
+    solved = not (np.isnan(z) or np.isinf(z))
 
-        self.tightLayout()
-        
-    def plotHist(self,data,noplot=False,colorbar=False,**args):
-        """
-        Create a 2d-histograms of data on all panels of the PlotGrid.
-        
-        Parameters: 
-            data: data to be histogramed (n=len(data)), numpy array (nxN)
-            
-        Optional parameters:
-            colorbar=False: include a colorbar?, boolean or int (0/1)
-            **args: all arguments of hist2d method, dictionary
-        
-        Return: 
-            hist: list of histogram instances.
-        """
-        opts=dict()
-        opts.update(args)
-            
-        hist=[]
-        for i,propi in enumerate(self.properties):
-            if self.dproperties[propi]["range"] is not None:
-                xmin,xmax=self.dproperties[propi]["range"]
-            else:
-                xmin=data[:,i].min()
-                xmax=data[:,i].max()
-            for j,propj in enumerate(self.properties):
-                if j<=i:continue
-                    
-                if self.dproperties[propj]["range"] is not None:
-                    ymin,ymax=self.dproperties[propj]["range"]
-                else:
-                    ymin=data[:,j].min()
-                    ymax=data[:,j].max()                
-                
-                opts["range"]=[[xmin,xmax],[ymin,ymax]]
-                h,xe,ye,im=self.axp[propi][propj].hist2d(data[:,i],data[:,j],**opts)
-                
-                hist+=[im]
-                if colorbar:
-                    #Create color bar
-                    divider=make_axes_locatable(self.axp[propi][propj])
-                    cax=divider.append_axes("top",size="9%",pad=0.1)
-                    self.fig.add_axes(cax)
-                    cticks=np.linspace(h.min(),h.max(),10)[2:-1]
-                    self.fig.colorbar(im,
-                                      ax=self.axp[propi][propj],
-                                      cax=cax,
-                                      orientation="horizontal",
-                                      ticks=cticks)
-                    cax.xaxis.set_tick_params(labelsize=0.5*self.fs,direction="in",pad=-0.8*self.fs)
-                    xt=cax.get_xticks()
-                    xm=xt.mean()
-                    m,e=UtilPlot.mantisaExp(xm)
-                    xtl=[]
-                    for x in xt:
-                        xtl+=["%.1f"%(x/10**e)]
-                    cax.set_xticklabels(xtl)
-                    cax.text(0,0.5,r"$\times 10^{%d}$"%e,ha="left",va="center",
-                             transform=cax.transAxes,fontsize=6,color='w')
+    # Encuentra las velocidades usando las funciones de Lagrange f, g
+    if solved:
+        f = 1 - y(z) / r1
+        fdot = (np.sqrt(mu) / (r1 * r2)) * np.sqrt(y(z) / C(z)) * (z * S(z) - 1)
+        g = A * np.sqrt(y(z) / mu)
+        gdot = 1 - y(z) / r2
 
-        self.setLabels()
-        self.setRanges()
-        self.setTickParams()
-        self.tightLayout()
+        # Compute the velocities V1 & V2
+        V1 = 1 / g * (P2 - f * P1)
+        V2 = 1 / g * (gdot * P2 - P1)
 
-        return hist
-                    
-    def scatterPlot(self,data,**args):
-        """
-        Scatter plot on all panels of the PlotGrid.
-        
-        Parameters: 
-            data: data to be histogramed (n=len(data)), numpy array (nxN)
-            
-        Optional parameters:
-            **args: all arguments of scatter method, dictionary
-        
-        Return: 
-            scatter: list of scatter instances.
-        """
-        scatter=[]
-        for i,propi in enumerate(self.properties):
-            for j,propj in enumerate(self.properties):
-                if j<=i:continue
-                scatter+=[self.axp[propi][propj].scatter(data[:,i],data[:,j],**args)]
+        elts = spy.oscelt(list(P1) + list(V1), 0, mu)
+        orbit_info = dict(z=z, elts=elts)
+        return V1, V2, orbit_info
 
-        self.setLabels()
-        self.setRanges()
-        self.setTickParams()
-        self.tightLayout()
-        return scatter
-    
+    print('El método de Lambert no convergió')
+    return np.array([0, 0, 0]), np.array([0, 0, 0]), dict(z=0, elts=[0] * 8)
+
+
+# Compatibilidad con versiones anteriores a la 0.6.31
+def _alias_module(module_name, symbols):
+    """Registra un submodulo de compatibilidad en `sys.modules`.
+
+    Parameters
+    ----------
+    module_name : str
+        Nombre completo del submodulo (por ejemplo, 'pymcel.plot').
+    symbols : dict
+        Simbolos que se exponen en el submodulo.
+
+    Examples
+    --------
+    >>> _alias_module('pymcel.plot', {'plot_ncuerpos_3d': plot_ncuerpos_3d})
+    """
+    mod = types.ModuleType(module_name)
+    mod.__dict__.update(symbols)
+    sys.modules[module_name] = mod
+    setattr(sys.modules[__name__], module_name.rsplit('.', 1)[-1], mod)
+
+_public_symbols = {k: v for k, v in globals().items() if not k.startswith('_')}
+_plot_symbols = {k: v for k, v in _public_symbols.items() if k.startswith('plot_') or k in (
+    'fija_ejes3d_proporcionales',
+    'fija_ejes_proporcionales',
+    'encuentra_rangos',
+    'axis_equal',
+    'fig_body',
+    'plotly_esfera',
+    'plotly_campo_vectorial',
+)}
+_extra_symbols = {k: v for k, v in _public_symbols.items() if k in ('C', 'S', 'solucion_lambert')}
+
+_alias_module('pymcel.plot', _plot_symbols)
+_alias_module('pymcel.extra', _extra_symbols)
+_alias_module('pymcel.export', _public_symbols)
+
