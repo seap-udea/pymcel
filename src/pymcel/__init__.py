@@ -85,6 +85,11 @@ def unidades_canonicas(UL=None, UM=None, UT=None, G=1):
     Examples
     --------
     >>> UL, UM, UT, Gc = unidades_canonicas(UL=1.0e3, UM=1.0)
+
+    Elaborado por
+    -------------
+        GPT-5.2-Codex, prompt por Jorge I. Zuluaga
+        Pruebas y Codigo adaptado por Jorge I. Zuluaga
     """
     provided = [UL is not None, UM is not None, UT is not None]
     if sum(provided) < 2:
