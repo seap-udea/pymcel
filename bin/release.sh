@@ -198,6 +198,9 @@ rm -rf "$ROOT_DIR/dist" "$ROOT_DIR/build" "$ROOT_DIR"/*.egg-info "$ROOT_DIR/src"
 log "Building distributions (sdist/wheel)..."
 "$PY" -m build
 
+log "Ensuring twine check dependencies..."
+"$PY" -m pip install -U twine readme_renderer nh3
+
 log "Validating distributions (twine check)..."
 "$PY" -m twine check dist/*
 

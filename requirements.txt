@@ -1,0 +1,6 @@
+spiceypy
+astroquery
+pandas
+matplotlib
+tqdm
+plotly
