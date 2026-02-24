@@ -62,6 +62,51 @@ except:
     FILE=""
     ROOTDIR=os.path.abspath('')
 
+def unidades_canonicas(UL=None, UM=None, UT=None, G=1):
+    """Calcula unidades canonicas consistentes con un valor de G.
+
+    Parameters
+    ----------
+    UL : float, optional
+        Unidad de longitud en SI (valor del metro canonico).
+    UM : float, optional
+        Unidad de masa en SI (valor del kilogramo canonico).
+    UT : float, optional
+        Unidad de tiempo en SI (valor del segundo canonico).
+    G : float, optional
+        Valor deseado de G en el sistema canonico (adimensional).
+
+    Returns
+    -------
+    tuple
+        `(UL, UM, UT, Gc)` con unidades canonicas en SI y el valor de
+        la constante gravitacional `Gc` en el sistema canonico.
+
+    Examples
+    --------
+    >>> UL, UM, UT, Gc = unidades_canonicas(UL=1.0e3, UM=1.0)
+    """
+    provided = [UL is not None, UM is not None, UT is not None]
+    if sum(provided) < 2:
+        raise ValueError("Debes proporcionar al menos dos de UL, UM, UT.")
+    if G is None or G <= 0:
+        raise ValueError("El valor de G debe ser positivo.")
+
+    G_si = constantes.G
+
+    if UL is not None and UM is not None and UT is not None:
+        Gc = G_si * (UM * UT**2 / UL**3)
+        return UL, UM, UT, Gc
+
+    if UL is None:
+        UL = (G_si * UM * UT**2 / G) ** (1.0 / 3.0)
+    elif UM is None:
+        UM = G * UL**3 / (G_si * UT**2)
+    else:
+        UT = math.sqrt(G * UL**3 / (G_si * UM))
+
+    return UL, UM, UT, G
+
 def ubica_archivos(path,basedir=None):
     """Obtiene la ruta absoluta de un archivo de datos del paquete.
 
@@ -1312,17 +1357,34 @@ def ncuerpos_solucion(sistema,ts):
     Parameters
     ----------
     sistema : list[dict]
-        Lista de particulas con `m`, `r`, `v`.
+        Lista de particulas con `m`, `r`, `v`. Cada particula es un
+        diccionario con:
+
+        - `m`: masa (o parametro gravitacional)
+        - `r`: posicion inicial como iterable de 3 componentes
+        - `v`: velocidad inicial como iterable de 3 componentes
     ts : numpy.ndarray
         Tiempos de integracion.
 
-    Returns
-    -------
-    tuple
-        `(rs, vs, rps, vps, constantes)`.
+        Returns
+        -------
+        tuple
+                `(rs, vs, rps, vps, constantes)` donde:
+
+                - `rs`, `vs`: arreglos con forma `(N, Nt, 3)` para posiciones y
+                    velocidades absolutas.
+                - `rps`, `vps`: arreglos con forma `(N, Nt, 3)` para posiciones y
+                    velocidades relativas al centro de masa.
+                - `constantes`: diccionario con constantes de movimiento y series
+                    asociadas (`M`, `RCM`, `PCM`, `L`, `K`, `U`, `E`).
 
     Examples
     --------
+    >>> sistema = [
+    ...     dict(m=1.0, r=[-0.5, 0.0, 0.0], v=[0.0, -0.5, 0.0]),
+    ...     dict(m=1.0, r=[ 0.5, 0.0, 0.0], v=[0.0,  0.5, 0.0]),
+    ... ]
+    >>> ts = np.linspace(0, 10, 1000)
     >>> rs, vs, rps, vps, constantes = ncuerpos_solucion(sistema, ts)
     """
     #Condiciones iniciales
@@ -1921,7 +1983,14 @@ def crtbp_solucion(alfa,ro,vo,ts):
     Returns
     -------
     tuple
-        `(rs_rot, vs_rot, rs_ine, vs_ine, r1_ine, r2_ine)`.
+                `(rs_rot, vs_rot, rs_ine, vs_ine, r1_ine, r2_ine)` donde:
+
+                - `rs_rot`, `vs_rot`: posiciones y velocidades del tercer cuerpo en el
+                    marco rotante, con forma `(Nt, 3)`.
+                - `rs_ine`, `vs_ine`: posiciones y velocidades del tercer cuerpo en el
+                    marco inercial, con forma `(Nt, 3)`.
+                - `r1_ine`, `r2_ine`: posiciones inerciales de las dos masas primarias
+                    (cuerpos masivos) a lo largo del tiempo, con forma `(Nt, 3)`.
 
     Examples
     --------
