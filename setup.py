@@ -70,7 +70,7 @@ setuptools.setup(
     # DEPENDENCIES
     # ######################################################################
     install_requires=['spiceypy','astroquery','pandas',
-	              'matplotlib','tqdm','pandas','plotly'],
+	              'matplotlib','tqdm','pandas','plotly','scipy'],
 
     # ######################################################################
     # OPTIONS
