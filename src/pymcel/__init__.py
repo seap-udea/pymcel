@@ -192,7 +192,7 @@ def descarga_kernels(basedir='pymcel/',overwrite=False,verbose=False):
     --------
     >>> pc.descarga_kernels()
     """
-    descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels",
+    descarga_kernel("https://raw.githubusercontent.com/seap-udea/pymcel/main/src/pymcel/data/kernels.txt",
                     overwrite=overwrite,basedir=basedir)
     f=open(ubica_archivos("kernels"),"r")
     kernel_dir = basedir+"/data/" 
