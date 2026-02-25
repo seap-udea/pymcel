@@ -158,7 +158,7 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None,verbose=False
     """
     if not filename:
         filename=url.split("/")[-1]
-    if filename == 'kernels':
+    if filename == 'kernels.txt':
         return
     qdata=False
     if 'data:' in filename:
