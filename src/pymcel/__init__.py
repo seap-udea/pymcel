@@ -220,10 +220,13 @@ def carga_kernels(basedir='pymcel/', verbose=False):
     if not os.path.isfile(ubica_archivos("kernels",basedir)):
         descarga_kernels(basedir=basedir)
     if verbose:print(f"Cargando todos los kernels de SPICE...")
-    spy.furnsh([
-        ubica_archivos("kernels.txt",basedir)
-    ])
-    if verbose:print(f"El entorno está listo para usar los datos de SPICE.")
+    try:
+        spy.furnsh([
+            ubica_archivos("kernels.txt",basedir)
+        ])
+        if verbose:print(f"El entorno está listo para usar los datos de SPICE.")
+    except Exception as e:
+        print(f"Error al cargar los kernels: {e}")
 
 def lista_kernels(basedir='pymcel/'):
     """Lista los kernels disponibles en el directorio de datos.
