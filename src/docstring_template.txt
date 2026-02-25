@@ -1,0 +1,62 @@
+{Descripción breve de la función o clase.}
+
+Parameters
+----------
+param1 : type
+    Descripción de lo que representa este parámetro.
+param2 : type
+    Descripción de lo que representa este parámetro.
+
+Returns
+-------
+return_type
+    Descripción del valor de retorno.
+
+Raises
+------
+ExceptionType
+    Descripción de las condiciones bajo las cuales se genera esta excepción.
+
+Methods
+-------
+method1(arg1, arg2)
+    Descripción del primer método de la clase.
+method2(arg1)
+    Descripción del segundo método de la clase.
+
+Attributes
+----------
+attribute1 : type
+    Descripción de lo que representa este atributo.
+attribute2 : type
+    Descripción de lo que representa este atributo.
+
+Examples
+--------
+>>> function_name(arg1, arg2)
+Resultado esperado o ejemplo de uso de la función.
+
+Notes
+-----
+Aquí se pueden incluir detalles adicionales sobre la implementación o el comportamiento de la función o clase.
+
+Warnings
+--------
+Aquí se pueden agregar advertencias o precauciones importantes relacionadas con el uso de la función o clase.
+
+See Also
+--------
+other_function()
+    Descripción de otras funciones relevantes.
+another_method()
+    Descripción de otros métodos relevantes.
+
+References
+----------
+Referencia1: Descripción de una fuente o artículo relevante para la función o clase.
+Referencia2: Descripción de otra fuente o artículo relevante.
+
+TODO
+----
+- Tareas pendientes o futuras mejoras que se deben considerar.
+- Optimización de la función para una mejor eficiencia.

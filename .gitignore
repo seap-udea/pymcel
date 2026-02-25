@@ -5,7 +5,6 @@ __pycache__
 .anim*
 env/
 dist/
-src/
 build/
 docs/_build/
 docs/_build_api_check/

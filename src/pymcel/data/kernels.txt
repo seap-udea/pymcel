@@ -1,0 +1,12 @@
+\begindata
+KERNELS_TO_LOAD = (
+    'pymcel/data/de430.bsp',
+    'pymcel/data/de430.tpc',
+    'pymcel/data/de430_tech-comments.txt',
+    'pymcel/data/earth_fixed.tf',
+    'pymcel/data/earth_latest_high_prec.bpc',
+    'pymcel/data/gm_de431.tpc',
+    'pymcel/data/latest_leapseconds.tls',
+    'pymcel/data/naif0012.tls',
+    'pymcel/data/pck00011.tpc'
+)
