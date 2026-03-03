@@ -102,7 +102,7 @@ Si usa `pymcel` en un trabajo academico, por favor cite el libro:
 
 ## ¿Qué hay de nuevo?
 
-Para una lista detallada de las características más nuevas introducidas en el paquete con la última versión vea el archivo [What's new](https://github.com/seap-udea/pymcel/blob/master/WHATSNEW.md).
+Para una lista detallada de las características más nuevas introducidas en el paquete con la última versión vea el archivo [What's new](https://github.com/seap-udea/pymcel/blob/main/WHATSNEW.md).
 
 ------------
 Este paquete ha sido diseñado y escrito originalmente por Jorge I. Zuluaga (C) 2023-Presente
