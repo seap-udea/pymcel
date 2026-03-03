@@ -87,6 +87,58 @@ Es también interesante consultar el [repositorio en `GitHub`](http://github.com
 
 Muchos de estos cuadernos incorporan los códigos que vienen con el libro **Mecánica Celeste: teoría, algoritmos y problemas** y pueden ser ejecutados por comodidad por docentes y estudiantes en `Google Colab`.
 
+## Uso de `agents.md` con asistentes de IA (VS Code, Cursor, Antigravity)
+
+Este repositorio incluye un archivo `agents.md` con contexto técnico de `pymcel` para que un asistente de IA entienda:
+
+- Qué hace el paquete y cómo instalarlo.
+- Qué funciones usar según el problema (N-cuerpos, Kepler, CRTBP, Lambert, efemérides).
+- Ejemplos ejecutables para empezar desde cero.
+- Buenas prácticas de unidades, tolerancias, kernels SPICE y validación.
+
+### Recomendación general
+
+1. Abra la carpeta del proyecto donde trabajará.
+2. Asegúrese de que `agents.md` esté en la raíz del proyecto (o copie ese archivo al proyecto activo).
+3. En el primer mensaje al asistente, pídale explícitamente usar ese archivo como contexto.
+
+Prompt sugerido:
+
+```text
+Usa el archivo agents.md de este proyecto como contexto principal para trabajar con pymcel.
+Antes de proponer código, sigue sus convenciones de API, unidades y ejemplos.
+```
+
+### En VS Code
+
+- Abra el repositorio/folder en VS Code.
+- Abra el chat del asistente.
+- Mencione en su primer prompt que use `agents.md` como referencia.
+- Cuando sea posible, adjunte o cite el archivo en la conversación.
+
+### En Cursor
+
+- Abra el proyecto en Cursor.
+- Inicie el chat del agente dentro del workspace.
+- Indique que tome `agents.md` como guía de trabajo para `pymcel`.
+- Si usa reglas/proyecto-contexto, incluya el contenido de `agents.md` allí.
+
+### En Antigravity (u otros entornos con agentes)
+
+- Cargue el repositorio o el directorio de trabajo.
+- Adjunte `agents.md` como documento de contexto del agente, o péguelo en la configuración de instrucciones del proyecto.
+- Pida al agente que siga explícitamente esa guía para generar y validar código con `pymcel`.
+
+### Si instala `pymcel` en otra máquina
+
+Puede descargar solo el archivo guía y reutilizarlo en su proyecto:
+
+```bash
+curl -L https://raw.githubusercontent.com/seap-udea/pymcel/main/agents.md -o agents.md
+```
+
+Luego, abra su entorno de desarrollo y use el prompt sugerido para que el agente trabaje con contexto correcto.
+
 ## Como citar PyMCel
 
 Si usa `pymcel` en un trabajo academico, por favor cite el libro:
