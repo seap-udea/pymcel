@@ -20,6 +20,8 @@ características introducidas en el paquete.
   - Documentación práctica para trabajar con asistentes de IA:
     - `agents.md`: guía completa para que un agente pueda usar `pymcel` de
       forma correcta y empezar desde cero en otra máquina.
+  - Registro del software en Zenodo con DOI permanente (10.5281/zenodo.18849743)
+    para facilitar citación académica y aumentar impacto científico del paquete.
   - Mejoras de mantenimiento que impactan estabilidad general del paquete y
     calidad de releases en la rama 0.9.x.
 

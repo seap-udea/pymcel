@@ -11,6 +11,7 @@
 [![book](https://img.shields.io/badge/Libro-Mecanica%20Celeste-0b7285)](https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345)
 [![buy](https://img.shields.io/badge/Donde%20conseguirlo-Librerias%20en%20linea-0b7285)](https://www.libreriadelau.com/mecanica-celeste-u-de-antioquia-fisica/p)
 [![orcid](https://img.shields.io/badge/ORCID-0000--0002--6140--3116-A6CE39?logo=orcid&logoColor=white)](https://orcid.org/0000-0002-6140-3116)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18849743.svg)](https://doi.org/10.5281/zenodo.18849743)
 
 El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la enseñanza de (o la investigación en) Mecánica Celeste o Astrodinámica.
 
@@ -141,7 +142,9 @@ Luego, abra su entorno de desarrollo y use el prompt sugerido para que el agente
 
 ## Como citar PyMCel
 
-Si usa `pymcel` en un trabajo academico, por favor cite el libro:
+Si usa `pymcel` en un trabajo academico, puede citar:
+
+**El libro (recomendado para metodología y teoría):**
 
 ```bibtex
 @book{jorge2024mecanica,
@@ -149,6 +152,18 @@ Si usa `pymcel` en un trabajo academico, por favor cite el libro:
    author={JORGE, I ZULUAGA},
    year={2024},
    publisher={UNIVERSIDAD DE ANTIOQUIA}
+}
+```
+
+**El software (para el package en sí):**
+
+```bibtex
+@software{zuluaga2026pymcel,
+  author = {Zuluaga, Jorge I.},
+  title = {pymcel: Utilidades de Mecánica Celeste y Astrodinámica},
+  year = {2026},
+  doi = {10.5281/zenodo.18849743},
+  url = {https://doi.org/10.5281/zenodo.18849743}
 }
 ```
 
