@@ -1,0 +1,43 @@
+{
+  "title": "pymcel: Utilidades de Mecánica Celeste y Astrodinámica",
+  "description": "pymcel es una librería en Python para enseñanza e investigación en Mecánica Celeste y Astrodinámica. Incluye rutinas para N-cuerpos, dos cuerpos, CRTBP, ecuación de Kepler, efemérides (SPICE/Horizons) y visualización científica.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Zuluaga, Jorge I.",
+      "orcid": "0000-0002-6140-3116",
+      "affiliation": "Universidad de Antioquia"
+    }
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "version": "0.9.13",
+  "language": "spa",
+  "keywords": [
+    "mecánica celeste",
+    "astrodinámica",
+    "astronomía",
+    "n-body",
+    "CRTBP",
+    "kepler",
+    "SPICE",
+    "Horizons"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/seap-udea/pymcel",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://pypi.org/project/pymcel",
+      "relation": "isIdenticalTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345",
+      "relation": "isDescribedBy",
+      "resource_type": "publication-book"
+    }
+  ]
+}

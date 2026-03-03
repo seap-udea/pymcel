@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use pymcel, please cite it using this metadata."
+title: "pymcel"
+version: "0.9.13"
+date-released: "2026-03-03"
+license: "MIT"
+authors:
+  - family-names: "Zuluaga"
+    given-names: "Jorge I."
+    orcid: "https://orcid.org/0000-0002-6140-3116"
+    affiliation: "Universidad de Antioquia"
+repository-code: "https://github.com/seap-udea/pymcel"
+url: "https://github.com/seap-udea/pymcel"
+keywords:
+  - "mecánica celeste"
+  - "astrodinámica"
+  - "astronomía"
+  - "n-body"
+  - "CRTBP"
+  - "kepler"
+abstract: "pymcel es una librería de utilidades para Mecánica Celeste y Astrodinámica, con rutinas para N-cuerpos, dos cuerpos, CRTBP, ecuación de Kepler, consultas de efemérides y visualización científica."
