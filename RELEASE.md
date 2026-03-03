@@ -1,4 +1,4 @@
-# pymcel v0.9.14 — Beta: mejoras de documentación, notebooks y flujo de trabajo con agentes IA
+# pymcel v0.9.15 — Beta: mejoras de documentación, notebooks y flujo de trabajo con agentes IA
 
 ## Release notes (resumen)
 
