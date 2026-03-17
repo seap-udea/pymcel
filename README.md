@@ -17,9 +17,11 @@ El paquete `pymcel` contiene un conjunto de utilidades que pueden usarse para la
 
 Las utilidades que contienen el paquete fueron originalmente desarrolladas como parte del libro [**Mecánica Celeste: teoría, algoritmos y problemas**](https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345) del profesor Jorge I. Zuluaga de la Universidad de Antioquia. Muchos de los códigos incluídos en el libro están disponibles en [la sección de ejemplos del repositorio en `GitHub`](https://github.com/seap-udea/pymcel/tree/main/ejemplos/cuadernos-libro) del paquete. El libro puede conseguirse [en PDF y en papel con la editorial de la Universidad de Antioquia](https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345) (normalmente envíos solo dentro de Colombia) o internacionalmente en [librerías en línea](https://www.libreriadelau.com/mecanica-celeste-u-de-antioquia-fisica/p) ([aquí también](https://www.buscalibre.com.co/libro-mecanica-celeste-teoria-algoritmos-y-problemas/9789585011953/p/62242977?afiliado=74c874bfb5a8145d7c1b)).
 
+<p align="center">
 <a href="https://libros.udea.edu.co/index.php/editorial_udea/catalog/book/345" target="_blank">
-<p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/mcel-jorge-zuluaga-2024.png?raw=true" alt="Portada del Libro"/></p>
+<img src="https://raw.githubusercontent.com/seap-udea/pymcel/main/ejemplos/figuras/mcel-jorge-zuluaga-2024.png" alt="Portada del Libro"/>
 </a>
+</p>
 
 En este sitio encontrará además un documento con las [*Fe de Erratas* del libro](https://github.com/seap-udea/pymcel/blob/main/ejemplos/cuadernos-libro/mcel_zuluaga-00-FeDeErratas.ipynb), en el que encontrarán algunas correcciones puntuales a defectos que se fueron con la primera edición.
 
@@ -80,7 +82,7 @@ ax.axis('equal')
 plt.show()
 ```
 
-<p align="center"><img src="https://github.com/seap-udea/pymcel/blob/main/ejemplos/figuras/crtbp-ejemplo.png?raw=true" alt="Ejemplo de CRTBP"/></p>
+<p align="center"><img src="https://raw.githubusercontent.com/seap-udea/pymcel/main/ejemplos/figuras/crtbp-ejemplo.png" alt="Ejemplo de CRTBP"/></p>
 
 ## Ejemplos de uso y códigos en el libro
 
