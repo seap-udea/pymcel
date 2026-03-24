@@ -165,6 +165,11 @@ def descarga_kernel(url,filename=None,overwrite=False,basedir=None,verbose=False
         filename=url.split(":")[1]
         qdata=True
     
+    # Crear directorio de datos si no existe
+    kernel_dir = os.path.join(basedir, 'data') if basedir else ubica_archivos('')
+    if not os.path.exists(kernel_dir):
+        os.makedirs(kernel_dir, exist_ok=True)
+    
     if verbose:print(f"Descargando kernel '{filename}' en '{basedir}'...")
     if not os.path.exists(ubica_archivos(filename,basedir)) or overwrite:
         if qdata:
