@@ -51,7 +51,7 @@ show:
 ##################################################################
 clean: cleancrap
 
-cleanall: cleancrap cleanout cleandist cleandata
+cleanall: _dev_cleanall cleancrap cleanout cleandist cleandata
 
 #=========================
 # Clean
@@ -165,3 +165,5 @@ release:
 
 import:
 	@$(PYTHON) -c "from pymcel import *;print(version)"
+# --- dev/cleanall (auto) ---
+include .dev_common.mk
