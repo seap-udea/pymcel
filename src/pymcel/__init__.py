@@ -3682,7 +3682,7 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
                                  plot_3d=False, recentrado=False, trazos=False,
                                  # Colisiones
                                  colisiones=False, tamanos_dinamicos=False,
-                                 i_central=None, alpha_radio=0.3, grabar_posiciones=False):
+                                 i_central=None, alpha_radio=0.3, grabar_posiciones=False, salva_gif=None):
     """
     Integra las ecuaciones de movimiento usando el integrador nativo de Rebound 
     y muestra la evolución de las posiciones en tiempo real mediante Matplotlib.
@@ -3727,6 +3727,9 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
     grabar_posiciones : bool
         Si es True, exporta un archivo 'estado_final.csv' con las propiedades finales 
         (masa, radio, posiciones, velocidades) de las partículas al cerrar la ventana.
+    salva_gif : str o None
+        Si se provee un nombre de archivo (ej. 'animacion.gif'), guarda la evolución
+        en vivo en ese archivo usando PillowWriter.
         
     Observaciones:
     --------------
@@ -3858,6 +3861,11 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         texto_tiempo = ax.text(0.05, 0.95, '', transform=ax.transAxes, 
                                fontsize=12, verticalalignment='top',
                                bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+                               
+    if salva_gif is not None:
+        from matplotlib.animation import PillowWriter
+        writer = PillowWriter(fps=15)
+        writer.setup(fig, salva_gif, dpi=100)
     
     print("Iniciando integración y gráfico en tiempo real... (Cierra la ventana para detener)")
     
@@ -3961,8 +3969,15 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         # Refrescar lienzo
         fig.canvas.draw()
         fig.canvas.flush_events()
+        
+        if salva_gif is not None:
+            writer.grab_frame()
             
     plt.ioff()
+    
+    if salva_gif is not None:
+        print(f"Generando y cerrando archivo GIF '{salva_gif}'... por favor espera.")
+        writer.finish()
     
     if grabar_posiciones:
         import pandas as pd

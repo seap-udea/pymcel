@@ -2,7 +2,7 @@ import pymcel as pc
 import numpy as np
 np.random.seed(42)
 
-N_particulas = 10
+N_particulas = 100
 M_tot = 1.0
 a_plummer = 1.0
 
@@ -15,9 +15,10 @@ pc.ncuerpos_rebound_tiempo_real(
     velocidades=vel, 
     t_final=None, 
     dt_grafico=0.5,
-    limite_grafico=20*a_plummer,
+    limite_grafico=30*a_plummer,
     titulo=f"Evolución de Cúmulo (N={N_particulas}) en 3D",
     plot_3d=0,
     recentrado=True,
-    trazos=0
+    trazos=0,
+    # salva_gif='cluster_evolucion.gif'
 )
