@@ -30,6 +30,8 @@ características introducidas en el paquete.
     - `condiciones_iniciales_plummer`: Cúmulos estelares esféricos.
     - `condiciones_iniciales_toomre`: Colisiones de galaxias (modelo de Toomre 1972) con herramientas paramétricas como `trasladar_y_rotar_sistema`.
     - `condiciones_iniciales_planetesimales`: Discos protoplanetarios enfocados en simular acreción planetaria escalando tamaños con el radio de Hill.
+    - `condiciones_iniciales_coreografia`: Generación de datos iniciales precisos para coreografías gravitacionales (Simó, 2001) para N=3, 4 y 5.
+  - Mayor personalización numérica y visual en `ncuerpos_rebound_tiempo_real`: selección del motor de integración interno (p. ej. el integrador de alta precisión adaptativo `ias15` para sistemas caóticos y su parámetro `epsilon`), control explícito del tamaño de la estela visual (`longitud_trazo`) y función automatizada para volcar la animación generada en un GIF.
   - Mejoras de mantenimiento que impactan estabilidad general del paquete y
     calidad de releases en la rama 0.9.x.
 
