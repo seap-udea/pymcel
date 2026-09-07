@@ -3426,6 +3426,564 @@ def solucion_lambert(P1, P2, tf, mu=1, direccion='pro', tol=1e-6, maxiter=10000)
     print('El método de Lambert no convergió')
     return np.array([0, 0, 0]), np.array([0, 0, 0]), dict(z=0, elts=[0] * 8)
 
+def condiciones_iniciales_plummer(N, masa_total, radio_escala):
+    """
+    Genera condiciones iniciales (masas, posiciones y velocidades) 
+    para un modelo de Esfera de Plummer.
+    
+    Nota: En todos los casos se asumen unidades canónicas (G = 1).
+    
+    Parámetros:
+    -----------
+    N : int
+        Número de partículas.
+    masa_total : float
+        Masa total del cúmulo.
+    radio_escala : float
+        Radio de escala del cúmulo (parámetro 'a' del modelo de Plummer).
+        
+    Retorna:
+    --------
+    masas : ndarray de forma (N,)
+        Arreglo con las masas de las partículas.
+    posiciones : ndarray de forma (N, 3)
+        Arreglo con las posiciones (x, y, z) de cada partícula.
+    velocidades : ndarray de forma (N, 3)
+        Arreglo con las velocidades (vx, vy, vz) de cada partícula.
+        
+    Observaciones:
+    --------------
+    Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), pero codificada con la asistencia de IA.
+    
+    Ejemplos:
+    ---------
+    >>> import numpy as np
+    >>> np.random.seed(42)
+    >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, masa_total=1.0, radio_escala=1.0)
+    >>> print(masas.shape, pos.shape, vel.shape)
+    (10,) (10, 3) (10, 3)
+    """
+    # Todas las partículas tienen la misma masa
+    masas = np.ones(N) * masa_total / N
+    posiciones = np.zeros((N, 3))
+    velocidades = np.zeros((N, 3))
+    
+    for i in range(N):
+        # 1. Generar Posiciones usando la distribución de densidad de Plummer
+        X1 = np.random.uniform(0.0001, 0.9999)
+        r = radio_escala / np.sqrt(X1**(-2/3) - 1.0)
+        
+        # Dirección aleatoria para la posición (coordenadas esféricas uniformes)
+        theta = np.arccos(np.random.uniform(-1, 1))
+        phi = np.random.uniform(0, 2 * np.pi)
+        
+        posiciones[i, 0] = r * np.sin(theta) * np.cos(phi)
+        posiciones[i, 1] = r * np.sin(theta) * np.sin(phi)
+        posiciones[i, 2] = r * np.cos(theta)
+        
+        # 2. Generar Velocidades usando el método de rechazo (Von Neumann)
+        # Velocidad de escape local
+        vel_escape = np.sqrt(2 * 1.0 * masa_total / np.sqrt(r**2 + radio_escala**2))
+        
+        while True:
+            q = np.random.uniform(0, 1)
+            g_prueba = np.random.uniform(0, 0.1) # el máximo de g(q) es aprox 0.092
+            
+            # Distribución de probabilidad de la velocidad g(q) = q^2 * (1 - q^2)^(7/2)
+            if g_prueba < (q**2 * (1.0 - q**2)**3.5):
+                break
+                
+        # Magnitud de la velocidad
+        v = q * vel_escape
+        
+        # Dirección aleatoria para la velocidad
+        theta_v = np.arccos(np.random.uniform(-1, 1))
+        phi_v = np.random.uniform(0, 2 * np.pi)
+        
+        velocidades[i, 0] = v * np.sin(theta_v) * np.cos(phi_v)
+        velocidades[i, 1] = v * np.sin(theta_v) * np.sin(phi_v)
+        velocidades[i, 2] = v * np.cos(theta_v)
+        
+    return masas, posiciones, velocidades
+
+def condiciones_iniciales_planetesimales(M_central, N_planetesimales, masa_total_disco, radio_minimo, radio_maximo, f_influencia=0.05):
+    """
+    Genera un disco protoplanetario de planetesimales distribuidos aleatoriamente 
+    en órbitas circulares alrededor de una masa central masiva.
+    
+    Esta rutina calcula masas, posiciones, velocidades y estima un radio físico 
+    de colisión proporcional al radio de Hill para propiciar acreción.
+    
+    Parámetros:
+    -----------
+    M_central : float
+        Masa de la estrella o cuerpo central.
+    N_planetesimales : int
+        Número de planetesimales en el disco.
+    masa_total_disco : float
+        Masa total combinada de todos los planetesimales. Se asume que todos
+        tienen la misma masa (masa_total_disco / N_planetesimales).
+    radio_minimo : float
+        Límite interior del disco donde se distribuyen los planetesimales.
+    radio_maximo : float
+        Límite exterior del disco protoplanetario.
+    f_influencia : float
+        Fracción del radio de Hill mutuo que se usará como radio físico de colisión.
+        Por defecto 0.05 exige encuentros muy cercanos (dentro del área gravitatoria) para fusionarse.
+        
+    Retorna:
+    --------
+    masas : ndarray de forma (N,)
+        Arreglo con la masa del cuerpo central seguida por las de los planetesimales.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales distribuidas en el disco en el plano z=0.
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales circulares Keplerianas.
+    radios : ndarray de forma (N,)
+        Radios físicos de colisión. El cuerpo central recibe un radio proporcional 
+        al radio mínimo del disco, y los planetesimales un radio f_influencia * R_Hill.
+        
+    Ejemplos:
+    ---------
+    >>> masas, pos, vel, radios = condiciones_iniciales_planetesimales(
+    ...     M_central=1.0, N_planetesimales=100, masa_total_disco=0.1, 
+    ...     radio_minimo=0.5, radio_maximo=3.0, f_influencia=0.05
+    ... )
+    """
+    N = 1 + N_planetesimales
+    masas = np.zeros(N)
+    posiciones = np.zeros((N, 3))
+    velocidades = np.zeros((N, 3))
+    radios = np.zeros(N)
+    
+    masas[0] = M_central
+    radios[0] = radio_minimo / 3.0 # Estrella: un tercio del radio mínimo para absorber cuerpos cercanos
+    
+    masa_planetesimal = masa_total_disco / N_planetesimales
+    
+    for i in range(1, N):
+        masas[i] = masa_planetesimal
+        r = np.random.uniform(radio_minimo, radio_maximo)
+        theta = np.random.uniform(0, 2 * np.pi)
+        
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+        
+        v = np.sqrt(M_central / r)
+        vx = -v * np.sin(theta)
+        vy = v * np.cos(theta)
+        
+        posiciones[i] = [x, y, 0.0]
+        velocidades[i] = [vx, vy, 0.0]
+        
+        # Radio de colisión: f_influencia * R_Hill para exigir encuentros cercanos
+        # r_hill = a * (m / 3M)^(1/3)
+        radios[i] = f_influencia * r * (masa_planetesimal / (3.0 * M_central))**(1/3)
+        
+    return masas, posiciones, velocidades, radios
+
+
+
+def trasladar_y_rotar_sistema(posiciones, velocidades, dr, dv, angulo_inclinacion=0.0):
+    """
+    Rota un sistema alrededor del eje X por `angulo_inclinacion` (radianes)
+    y luego lo traslada en el espacio agregando dr a la posición y dv a la velocidad.
+    Útil para preparar colisiones de galaxias en posiciones y planos arbitrarios.
+    """
+    # Rotación en X
+    cos_a = np.cos(angulo_inclinacion)
+    sin_a = np.sin(angulo_inclinacion)
+    
+    pos_rot = np.zeros_like(posiciones)
+    vel_rot = np.zeros_like(velocidades)
+    
+    pos_rot[:, 0] = posiciones[:, 0]
+    pos_rot[:, 1] = posiciones[:, 1] * cos_a - posiciones[:, 2] * sin_a
+    pos_rot[:, 2] = posiciones[:, 1] * sin_a + posiciones[:, 2] * cos_a
+    
+    vel_rot[:, 0] = velocidades[:, 0]
+    vel_rot[:, 1] = velocidades[:, 1] * cos_a - velocidades[:, 2] * sin_a
+    vel_rot[:, 2] = velocidades[:, 1] * sin_a + velocidades[:, 2] * cos_a
+    
+    # Traslación
+    pos_rot += np.array(dr)
+    vel_rot += np.array(dv)
+    
+    return pos_rot, vel_rot
+
+def condiciones_iniciales_toomre(M_central, anillos, estrellas_por_anillo, radio_minimo, radio_maximo, r_ini=[0.0, 0.0, 0.0], v_ini=[0.0, 0.0, 0.0], angulo_ini=0.0):
+    """
+    Genera posiciones y velocidades para un modelo de galaxia de Toomre (1972).
+    Las estrellas orbitan en círculos perfectos alrededor de la masa central,
+    y luego el sistema completo se traslada y rota opcionalmente.
+    
+    Parámetros:
+    -----------
+    M_central : float
+        Masa de la partícula central galáctica.
+    anillos : int
+        Número de anillos estelares concéntricos.
+    estrellas_por_anillo : int
+        Número de estrellas en cada anillo.
+    radio_minimo : float
+        Radio del anillo más interno.
+    radio_maximo : float
+        Radio del anillo más externo.
+    r_ini : list o ndarray
+        Posición inicial del centro de la galaxia.
+    v_ini : list o ndarray
+        Velocidad inicial del centro de la galaxia.
+    angulo_ini : float
+        Inclinación inicial de la galaxia respecto al plano XY.
+        
+    Retorna:
+    --------
+    masas : ndarray de forma (N,)
+    posiciones : ndarray de forma (N, 3)
+    velocidades : ndarray de forma (N, 3)
+    """
+    N_estrellas = anillos * estrellas_por_anillo
+    N = 1 + N_estrellas
+    
+    masas = np.zeros(N)
+    posiciones = np.zeros((N, 3))
+    velocidades = np.zeros((N, 3))
+    
+    # Centro galáctico (índice 0)
+    masas[0] = M_central
+    
+    # Anillos
+    radios = np.linspace(radio_minimo, radio_maximo, anillos)
+    idx = 1
+    for r in radios:
+        for i in range(estrellas_por_anillo):
+            theta = i * 2 * np.pi / estrellas_por_anillo
+            
+            x = r * np.cos(theta)
+            y = r * np.sin(theta)
+            
+            # v = sqrt(G*M/r) con G=1
+            v = np.sqrt(M_central / r)
+            vx = -v * np.sin(theta)
+            vy = v * np.cos(theta)
+            
+            posiciones[idx] = [x, y, 0.0]
+            velocidades[idx] = [vx, vy, 0.0]
+            idx += 1
+            
+    # Trasladar y rotar el sistema según las condiciones iniciales
+    posiciones, velocidades = trasladar_y_rotar_sistema(posiciones, velocidades, dr=r_ini, dv=v_ini, angulo_inclinacion=angulo_ini)
+            
+    return masas, posiciones, velocidades
+
+def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,  
+                                 t_final=20.0, dt_grafico=0.05, 
+                                 limite_grafico=None, titulo=None, 
+                                 plot_3d=False, recentrado=False, trazos=False,
+                                 # Colisiones
+                                 colisiones=False, tamanos_dinamicos=False,
+                                 i_central=None, alpha_radio=0.3, grabar_posiciones=False):
+    """
+    Integra las ecuaciones de movimiento usando el integrador nativo de Rebound 
+    y muestra la evolución de las posiciones en tiempo real mediante Matplotlib.
+    
+    Nota: En todos los casos se asumen unidades canónicas (G = 1).
+    
+    Parámetros:
+    -----------
+    masas : ndarray de forma (N,)
+        Masas de las partículas.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales (x, y, z).
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales (vx, vy, vz).
+    t_final : float o None
+        Tiempo final de la simulación. Si es None, la integración sigue indefinidamente.
+    dt_grafico : float
+        Intervalo de tiempo entre actualizaciones del gráfico.
+    limite_grafico : float o None
+        Límite espacial de los ejes para el gráfico (desde -limite hasta limite).
+    titulo : str o None
+        Título personalizado para el gráfico.
+    plot_3d : bool
+        Si es True, muestra la evolución en un gráfico 3D.
+    recentrado : bool
+        Si es True, recentra continuamente la cámara en el centro de masa de las partículas ligadas.
+    trazos : bool
+        Si es True, dibuja una estela con la trayectoria reciente de cada partícula.
+    radios : ndarray de forma (N,) o None
+        Radios físicos de colisión de las partículas. Requerido si colisiones=True.
+    colisiones : bool
+        Activa la detección de colisiones en Rebound usando resolución 'merge' 
+        (fusión inelástica perfecta que conserva masa y volumen).
+    tamanos_dinamicos : bool
+        Dibuja representaciones multicapa de las partículas (núcleo y zona de influencia) 
+        cuyo tamaño en pantalla escala proporcionalmente con su radio físico real.
+    i_central : int o None
+        Índice o identificador de un cuerpo principal (ej. la estrella) que será dibujado
+        con un color naranja distintivo y tamaño fijo proporcional a su radio.
+    alpha_radio : float
+        Transparencia del área de influencia gravitatoria/colisión (por defecto 0.3).
+    grabar_posiciones : bool
+        Si es True, exporta un archivo 'estado_final.csv' con las propiedades finales 
+        (masa, radio, posiciones, velocidades) de las partículas al cerrar la ventana.
+        
+    Observaciones:
+    --------------
+    - Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), 
+      pero codificada con la asistencia de IA.
+      
+    Ejemplos:
+    ---------
+    1. Dinámica de Cúmulo Estelar (Plummer):
+    >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, M_total=1.0, R_plummer=1.0)
+    >>> ncuerpos_rebound_tiempo_real(masas, pos, vel, t_final=None, plot_3d=True, recentrado=True)
+    
+    2. Colisión de Galaxias (Toomre):
+    >>> m1, p1, v1 = condiciones_iniciales_toomre(M_central=1.0, anillos=10, estrellas_por_anillo=12, radio_minimo=0.2, radio_maximo=1.0)
+    >>> m2, p2, v2 = condiciones_iniciales_toomre(M_central=0.6, anillos=5, estrellas_por_anillo=6, radio_minimo=0.2, radio_maximo=0.6, r_ini=[3.0, 1.0, 0], v_ini=[-0.5, 0.2, 0])
+    >>> ncuerpos_rebound_tiempo_real(np.concatenate([m1,m2]), np.concatenate([p1,p2]), np.concatenate([v1,v2]), plot_3d=False)
+    
+    3. Acreción de Planetesimales (con colisiones):
+    >>> masas, pos, vel, radios = condiciones_iniciales_planetesimales(M_central=1.0, N_planetesimales=100, masa_total_disco=0.1, radio_minimo=0.5, radio_maximo=3.0)
+    >>> ncuerpos_rebound_tiempo_real(masas, pos, vel, radios=radios, colisiones=True, tamanos_dinamicos=True, i_central=0)
+    """
+    try:
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            import rebound
+    except ImportError:
+        print("Error: El paquete 'rebound' no está instalado.")
+        print("Por favor, instálalo con:")
+        print("pip install rebound")
+        return
+
+    N = len(masas)
+    
+    if limite_grafico is None:
+        limite_grafico = 2.0 * np.max(np.abs(posiciones))
+        
+    # Configurar simulación en Rebound
+    sim = rebound.Simulation()
+    sim.G = 1.0
+    
+    if colisiones:
+        sim.collision = "direct"
+        sim.collision_resolve = "merge"
+    
+    # Añadir partículas a la simulación
+    for i in range(N):
+        r_val = radios[i] if radios is not None else 0.0
+        sim.add(m=masas[i], 
+                x=posiciones[i,0], y=posiciones[i,1], z=posiciones[i,2], 
+                vx=velocidades[i,0], vy=velocidades[i,1], vz=velocidades[i,2],
+                r=r_val, hash=i)
+    
+    # Mover el sistema al centro de masa para evitar derivas
+    sim.move_to_com()
+    
+    # Configuraciones de integración
+    # El integrador leapfrog es adecuado para cúmulos sin encuentros muy cerrados
+    sim.integrator = "leapfrog"
+    sim.dt = 0.005
+    
+    # Configurar plot interactivo
+    plt.ion()
+    fig = plt.figure(figsize=(7, 7))
+    if plot_3d:
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_zlim(-limite_grafico, limite_grafico)
+        ax.set_zlabel("Z")
+        z_data = [p.z for p in sim.particles]
+    else:
+        ax = fig.add_subplot(111)
+        
+    ax.set_xlim(-limite_grafico, limite_grafico)
+    ax.set_ylim(-limite_grafico, limite_grafico)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    if titulo is not None:
+        ax.set_title(titulo)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    
+    # Inicializar scatter y trazos
+    x_data = [p.x for p in sim.particles]
+    y_data = [p.y for p in sim.particles]
+    if plot_3d:
+        z_data = [p.z for p in sim.particles]
+        
+    if tamanos_dinamicos:
+        sizes_inf = [ (p.r * 250.0)**2 for p in sim.particles ]
+        sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and p.hash.value == i_central) else 4.0 for p in sim.particles ]
+        
+        colors_inf = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'gray' for p in sim.particles ]
+        colors_core = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'navy' for p in sim.particles ]
+        
+        if plot_3d:
+            scatter_inf = ax.scatter(x_data, y_data, z_data, s=sizes_inf, c=colors_inf, edgecolors='none', alpha=alpha_radio)
+            scatter_core = ax.scatter(x_data, y_data, z_data, s=sizes_core, c=colors_core, edgecolors='none')
+        else:
+            scatter_inf = ax.scatter(x_data, y_data, s=sizes_inf, c=colors_inf, edgecolors='none', alpha=alpha_radio)
+            scatter_core = ax.scatter(x_data, y_data, s=sizes_core, c=colors_core, edgecolors='none')
+    else:
+        if plot_3d:
+            scatter, = ax.plot(x_data, y_data, z_data, 'o', markersize=2, alpha=0.7, color='navy')
+        else:
+            scatter, = ax.plot(x_data, y_data, 'o', markersize=2, alpha=0.7, color='navy')
+        
+    if trazos:
+        lineas = {}
+        hist_x = {p.hash.value: [p.x] for p in sim.particles}
+        hist_y = {p.hash.value: [p.y] for p in sim.particles}
+        MAX_TRAIL = 80  # Longitud máxima de la cola
+        if plot_3d:
+            hist_z = {p.hash.value: [p.z] for p in sim.particles}
+            for p in sim.particles:
+                h = p.hash.value
+                line, = ax.plot(hist_x[h], hist_y[h], hist_z[h], '-', alpha=0.4, linewidth=1.0)
+                lineas[h] = line
+        else:
+            for p in sim.particles:
+                h = p.hash.value
+                line, = ax.plot(hist_x[h], hist_y[h], '-', alpha=0.4, linewidth=1.0)
+                lineas[h] = line
+    
+    # Texto para mostrar solamente el tiempo
+    if plot_3d:
+        texto_tiempo = ax.text2D(0.05, 0.95, '', transform=ax.transAxes, 
+                                 fontsize=12, verticalalignment='top',
+                                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+    else:
+        texto_tiempo = ax.text(0.05, 0.95, '', transform=ax.transAxes, 
+                               fontsize=12, verticalalignment='top',
+                               bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
+    
+    print("Iniciando integración y gráfico en tiempo real... (Cierra la ventana para detener)")
+    
+    while (t_final is None or sim.t < t_final) and plt.fignum_exists(fig.number):
+        sim.integrate(sim.t + dt_grafico)
+        
+        # Actualizar datos del plot extrayendo posiciones
+        x_data = [p.x for p in sim.particles]
+        y_data = [p.y for p in sim.particles]
+        
+        if tamanos_dinamicos:
+            sizes_inf = [ (p.r * 250.0)**2 for p in sim.particles ]
+            sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and p.hash.value == i_central) else 4.0 for p in sim.particles ]
+            
+            colors_inf = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'gray' for p in sim.particles ]
+            colors_core = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'navy' for p in sim.particles ]
+            
+            scatter_inf.set_sizes(sizes_inf)
+            scatter_inf.set_facecolors(colors_inf)
+            scatter_core.set_sizes(sizes_core)
+            scatter_core.set_facecolors(colors_core)
+            
+            if plot_3d:
+                z_data = [p.z for p in sim.particles]
+                scatter_inf._offsets3d = (x_data, y_data, z_data)
+                scatter_core._offsets3d = (x_data, y_data, z_data)
+            else:
+                scatter_inf.set_offsets(np.c_[x_data, y_data])
+                scatter_core.set_offsets(np.c_[x_data, y_data])
+        else:
+            scatter.set_data(x_data, y_data)
+            if plot_3d:
+                z_data = [p.z for p in sim.particles]
+                scatter.set_3d_properties(z_data)
+            
+        if trazos:
+            for p in sim.particles:
+                h = p.hash.value
+                hist_x[h].append(p.x)
+                hist_y[h].append(p.y)
+                if len(hist_x[h]) > MAX_TRAIL:
+                    hist_x[h].pop(0)
+                    hist_y[h].pop(0)
+                lineas[h].set_data(hist_x[h], hist_y[h])
+                if plot_3d:
+                    hist_z[h].append(p.z)
+                    if len(hist_z[h]) > MAX_TRAIL:
+                        hist_z[h].pop(0)
+                    lineas[h].set_3d_properties(hist_z[h])
+        
+        # --- Cálculo de energía para determinar partículas ligadas ---
+        # 1. Extraer propiedades a arreglos
+        pos_arr = np.array([[p.x, p.y, p.z] for p in sim.particles])
+        vel_arr = np.array([[p.vx, p.vy, p.vz] for p in sim.particles])
+        m_arr = np.array([p.m for p in sim.particles])
+        
+        # 2. Calcular matriz de distancias (usando broadcasting)
+        dx = pos_arr[:, 0:1] - pos_arr[:, 0]
+        dy = pos_arr[:, 1:2] - pos_arr[:, 1]
+        dz = pos_arr[:, 2:3] - pos_arr[:, 2]
+        distancias = np.sqrt(dx**2 + dy**2 + dz**2)
+        np.fill_diagonal(distancias, np.inf) # Evitar división por cero
+        
+        # 3. Calcular Energías (con G = 1.0)
+        # Energía potencial por unidad de masa = - G * sum(m_j / r_ij)
+        energia_potencial = -1.0 * np.sum(m_arr / distancias, axis=1)
+        
+        # Energía cinética por unidad de masa = 1/2 * v^2
+        energia_cinetica = 0.5 * np.sum(vel_arr**2, axis=1)
+        
+        # 4. Determinar partículas con energía total (cinética + potencial) negativa
+        mascara_ligadas = (energia_cinetica + energia_potencial) < 0
+        ligadas = np.sum(mascara_ligadas)
+        
+        # 5. Centrar la cámara en el Centro de Masa de las partículas ligadas (si la opción está activa)
+        if recentrado:
+            if ligadas > 0:
+                masas_ligadas = m_arr[mascara_ligadas]
+                pos_ligadas = pos_arr[mascara_ligadas]
+                masa_total_ligadas = np.sum(masas_ligadas)
+                # Promedio ponderado por masa
+                com_ligadas = np.sum(pos_ligadas * masas_ligadas[:, np.newaxis], axis=0) / masa_total_ligadas
+            else:
+                com_ligadas = np.array([0.0, 0.0, 0.0])
+                
+            # Mantener el nivel de zoom actual del usuario, pero centrando en com_ligadas
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
+            hw_x = (xlim[1] - xlim[0]) / 2.0
+            hw_y = (ylim[1] - ylim[0]) / 2.0
+            ax.set_xlim(com_ligadas[0] - hw_x, com_ligadas[0] + hw_x)
+            ax.set_ylim(com_ligadas[1] - hw_y, com_ligadas[1] + hw_y)
+            if plot_3d:
+                zlim = ax.get_zlim()
+                hw_z = (zlim[1] - zlim[0]) / 2.0
+                ax.set_zlim(com_ligadas[2] - hw_z, com_ligadas[2] + hw_z)
+        
+        # Actualizar texto en el gráfico
+        texto_tiempo.set_text(f"Tiempo: {sim.t:.2f}\nLigadas: {ligadas}/{len(sim.particles)}")
+        
+        # Refrescar lienzo
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+            
+    plt.ioff()
+    
+    if grabar_posiciones:
+        import pandas as pd
+        df = pd.DataFrame({
+            'm': [p.m for p in sim.particles],
+            'r': [p.r for p in sim.particles],
+            'x': [p.x for p in sim.particles],
+            'y': [p.y for p in sim.particles],
+            'z': [p.z for p in sim.particles],
+            'vx': [p.vx for p in sim.particles],
+            'vy': [p.vy for p in sim.particles],
+            'vz': [p.vz for p in sim.particles],
+        })
+        df.to_csv('estado_final.csv', index=False)
+        print("Estado final de las partículas guardado en 'estado_final.csv'.")
+
+    if plt.fignum_exists(fig.number):
+        print("Simulación terminada. Cierra la ventana del gráfico para salir.")
+        plt.show()
+    else:
+        print("Simulación interrumpida (ventana cerrada).")
 
 # Compatibilidad con versiones anteriores a la 0.6.31
 def _alias_module(module_name, symbols):

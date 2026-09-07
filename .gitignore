@@ -17,3 +17,5 @@ contrib
 **/DS_Store
 **/.DS_Store
 **/Thumbs.db
+**/pymcel/data/
+!src/pymcel/data/

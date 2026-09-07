@@ -22,6 +22,14 @@ características introducidas en el paquete.
       forma correcta y empezar desde cero en otra máquina.
   - Registro del software en Zenodo con DOI permanente (10.5281/zenodo.18849743)
     para facilitar citación académica y aumentar impacto científico del paquete.
+  - Integración nativa con `rebound` para simulaciones de N-cuerpos en tiempo real, 
+    usando la nueva función `ncuerpos_rebound_tiempo_real` que incluye despliegue 
+    gráfico interactivo 2D/3D con Matplotlib, soporte para exportar estados 
+    y detección de partículas ligadas.
+  - Nuevas rutinas avanzadas para generar condiciones iniciales de diversos sistemas astrofísicos:
+    - `condiciones_iniciales_plummer`: Cúmulos estelares esféricos.
+    - `condiciones_iniciales_toomre`: Colisiones de galaxias (modelo de Toomre 1972) con herramientas paramétricas como `trasladar_y_rotar_sistema`.
+    - `condiciones_iniciales_planetesimales`: Discos protoplanetarios enfocados en simular acreción planetaria escalando tamaños con el radio de Hill.
   - Mejoras de mantenimiento que impactan estabilidad general del paquete y
     calidad de releases en la rama 0.9.x.
 
