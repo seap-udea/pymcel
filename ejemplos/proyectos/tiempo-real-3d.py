@@ -1,10 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    import rebound
+import rebound
 
 import pymcel as pc
 np.random.seed(42)

@@ -3543,6 +3543,11 @@ def condiciones_iniciales_planetesimales(M_central, N_planetesimales, masa_total
         Radios físicos de colisión. El cuerpo central recibe un radio proporcional 
         al radio mínimo del disco, y los planetesimales un radio f_influencia * R_Hill.
         
+    Observaciones:
+    --------------
+    - Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), 
+      pero codificada con la asistencia de IA.
+        
     Ejemplos:
     ---------
     >>> masas, pos, vel, radios = condiciones_iniciales_planetesimales(
@@ -3589,6 +3594,11 @@ def trasladar_y_rotar_sistema(posiciones, velocidades, dr, dv, angulo_inclinacio
     Rota un sistema alrededor del eje X por `angulo_inclinacion` (radianes)
     y luego lo traslada en el espacio agregando dr a la posición y dv a la velocidad.
     Útil para preparar colisiones de galaxias en posiciones y planos arbitrarios.
+    
+    Observaciones:
+    --------------
+    - Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), 
+      pero codificada con la asistencia de IA.
     """
     # Rotación en X
     cos_a = np.cos(angulo_inclinacion)
@@ -3641,6 +3651,11 @@ def condiciones_iniciales_toomre(M_central, anillos, estrellas_por_anillo, radio
     masas : ndarray de forma (N,)
     posiciones : ndarray de forma (N, 3)
     velocidades : ndarray de forma (N, 3)
+    
+    Observaciones:
+    --------------
+    - Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), 
+      pero codificada con la asistencia de IA.
     """
     N_estrellas = anillos * estrellas_por_anillo
     N = 1 + N_estrellas
@@ -3676,13 +3691,120 @@ def condiciones_iniciales_toomre(M_central, anillos, estrellas_por_anillo, radio
             
     return masas, posiciones, velocidades
 
+
+def condiciones_iniciales_coreografia(N=3):
+    """
+    Genera posiciones y velocidades para coreografías de N cuerpos 
+    en donde todos los cuerpos viajan por la misma trayectoria (chains).
+    Los datos están basados en la Tabla 1 del artículo de Simó (2001).
+    
+    Parámetros:
+    -----------
+    N : int
+        Número de partículas en la coreografía (actualmente soportados: 3, 4, 5).
+        
+    Retorna:
+    --------
+    masas : ndarray de forma (N,)
+        Todas las partículas tienen masa 1.0.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales en el plano Z=0.
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales correspondientes.
+        
+    Observaciones:
+    --------------
+    - Esta rutina fue concebida y diseñada por un humano (Jorge I. Zuluaga), 
+      pero codificada con la asistencia de IA.
+      
+    Referencias:
+    ------------
+    - Simó, C. (2001). New families of solutions in N-body problems. 
+      In European Congress of Mathematics: Barcelona, July 10–14, 2000, 
+      Volume I (pp. 101-115). Basel: Birkhäuser Basel.
+    """
+    if N not in [3, 4, 5]:
+        raise ValueError(f"Las condiciones iniciales para N={N} no están disponibles. Solo N=3, 4 o 5.")
+        
+    masas = np.ones(N)
+    posiciones = np.zeros((N, 3))
+    velocidades = np.zeros((N, 3))
+    
+    if N == 3:
+        # Figura en ocho (Chenciner & Montgomery)
+        x2 = 0.995492
+        vx3 = 0.695804
+        vy3 = 1.067860
+        
+        posiciones[2] = [0.0, 0.0, 0.0]
+        velocidades[2] = [vx3, vy3, 0.0]
+        
+        posiciones[1] = [x2, 0.0, 0.0]
+        posiciones[0] = [-x2, 0.0, 0.0]
+        
+        v12_x = -vx3 / 2.0
+        v12_y = -vy3 / 2.0
+        velocidades[0] = [v12_x, v12_y, 0.0]
+        velocidades[1] = [v12_x, v12_y, 0.0]
+        
+    elif N == 4:
+        x1 = 1.382857
+        vy1 = 0.584873
+        y2 = 0.157030
+        vx2 = 1.871935
+        
+        posiciones[0] = [x1, 0.0, 0.0]
+        velocidades[0] = [0.0, vy1, 0.0]
+        
+        posiciones[1] = [0.0, y2, 0.0]
+        velocidades[1] = [vx2, 0.0, 0.0]
+        
+        posiciones[2] = [-x1, 0.0, 0.0]
+        velocidades[2] = [0.0, -vy1, 0.0]
+        
+        posiciones[3] = [0.0, -y2, 0.0]
+        velocidades[3] = [-vx2, 0.0, 0.0]
+        
+    elif N == 5:
+        x2 = 0.439775
+        y2 = -0.169717
+        vx2 = 1.822785
+        vy2 = 0.128248
+        
+        x3 = -1.268608
+        y3 = -0.267651
+        vx3 = 1.271564
+        vy3 = 0.168645
+        
+        posiciones[1] = [x2, y2, 0.0]
+        velocidades[1] = [vx2, vy2, 0.0]
+        
+        posiciones[2] = [x3, y3, 0.0]
+        velocidades[2] = [vx3, vy3, 0.0]
+        
+        posiciones[3] = [x3, -y3, 0.0]
+        velocidades[3] = [-vx3, vy3, 0.0]
+        
+        posiciones[4] = [x2, -y2, 0.0]
+        velocidades[4] = [-vx2, vy2, 0.0]
+        
+        # P1 por conservación del centro de masa (suma pos = 0, suma vel = 0)
+        posiciones[0] = -np.sum(posiciones[1:], axis=0)
+        velocidades[0] = -np.sum(velocidades[1:], axis=0)
+        
+    return masas, posiciones, velocidades
+
 def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,  
+                                 # Representación
                                  t_final=20.0, dt_grafico=0.05, 
-                                 limite_grafico=None, titulo=None, 
-                                 plot_3d=False, recentrado=False, trazos=False,
+                                 plot_3d=False, recentrado=False,
+                                 # Decoración
+                                 limite_grafico=None, titulo=None, trazos=False, longitud_trazo=85,
                                  # Colisiones
                                  colisiones=False, tamanos_dinamicos=False,
-                                 i_central=None, alpha_radio=0.3, grabar_posiciones=False, salva_gif=None):
+                                 i_central=None, alpha_radio=0.3, grabar_posiciones=False, salva_gif=None,
+                                 # Integrador
+                                 integrator="leapfrog", epsilon=None):
     """
     Integra las ecuaciones de movimiento usando el integrador nativo de Rebound 
     y muestra la evolución de las posiciones en tiempo real mediante Matplotlib.
@@ -3711,6 +3833,13 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         Si es True, recentra continuamente la cámara en el centro de masa de las partículas ligadas.
     trazos : bool
         Si es True, dibuja una estela con la trayectoria reciente de cada partícula.
+    integrator : str
+        Integrador numérico a utilizar en Rebound (por defecto "leapfrog").
+        Opciones comunes: "ias15", "whfast", "leapfrog".
+    epsilon : float o None
+        Tolerancia (precisión adaptativa) para el integrador ias15. Si es None, usa el valor por defecto de Rebound (~1e-9).
+    longitud_trazo : int
+        Número máximo de puntos a recordar en la estela de cada partícula (por defecto 85).
     radios : ndarray de forma (N,) o None
         Radios físicos de colisión de las partículas. Requerido si colisiones=True.
     colisiones : bool
@@ -3787,8 +3916,11 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
     sim.move_to_com()
     
     # Configuraciones de integración
-    # El integrador leapfrog es adecuado para cúmulos sin encuentros muy cerrados
-    sim.integrator = "leapfrog"
+    # El integrador leapfrog es adecuado para cúmulos sin encuentros muy cerrados, 
+    # ias15 es mejor para coreografías y sistemas de alta precisión.
+    sim.integrator = integrator
+    if integrator == "ias15" and epsilon is not None:
+        sim.ri_ias15.epsilon = epsilon
     sim.dt = 0.005
     
     # Configurar plot interactivo
@@ -3839,7 +3971,7 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         lineas = {}
         hist_x = {p.hash.value: [p.x] for p in sim.particles}
         hist_y = {p.hash.value: [p.y] for p in sim.particles}
-        MAX_TRAIL = 80  # Longitud máxima de la cola
+        MAX_TRAIL = longitud_trazo  # Longitud máxima de la cola
         if plot_3d:
             hist_z = {p.hash.value: [p.z] for p in sim.particles}
             for p in sim.particles:
