@@ -3891,6 +3891,16 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         print("pip install rebound")
         return
 
+    # Detectar si rebound usa 'name' (>=5.0) o 'hash' (<5.0) para identificar partículas
+    _use_name = hasattr(rebound.Particle, 'name')
+    
+    def _particle_id(p):
+        """Obtiene el identificador de una partícula según la versión de rebound."""
+        if _use_name:
+            return p.name
+        else:
+            return p.hash.value
+
     N = len(masas)
     
     if limite_grafico is None:
@@ -3907,10 +3917,11 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
     # Añadir partículas a la simulación
     for i in range(N):
         r_val = radios[i] if radios is not None else 0.0
+        _id_kwargs = dict(name=str(i)) if _use_name else dict(hash=i)
         sim.add(m=masas[i], 
                 x=posiciones[i,0], y=posiciones[i,1], z=posiciones[i,2], 
                 vx=velocidades[i,0], vy=velocidades[i,1], vz=velocidades[i,2],
-                r=r_val, hash=i)
+                r=r_val, **_id_kwargs)
     
     # Mover el sistema al centro de masa para evitar derivas
     sim.move_to_com()
@@ -3950,10 +3961,10 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         
     if tamanos_dinamicos:
         sizes_inf = [ (p.r * 250.0)**2 for p in sim.particles ]
-        sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and p.hash.value == i_central) else 4.0 for p in sim.particles ]
+        sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and _particle_id(p) == i_central) else 4.0 for p in sim.particles ]
         
-        colors_inf = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'gray' for p in sim.particles ]
-        colors_core = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'navy' for p in sim.particles ]
+        colors_inf = [ 'orange' if (i_central is not None and _particle_id(p) == i_central) else 'gray' for p in sim.particles ]
+        colors_core = [ 'orange' if (i_central is not None and _particle_id(p) == i_central) else 'navy' for p in sim.particles ]
         
         if plot_3d:
             scatter_inf = ax.scatter(x_data, y_data, z_data, s=sizes_inf, c=colors_inf, edgecolors='none', alpha=alpha_radio)
@@ -3969,18 +3980,18 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         
     if trazos:
         lineas = {}
-        hist_x = {p.hash.value: [p.x] for p in sim.particles}
-        hist_y = {p.hash.value: [p.y] for p in sim.particles}
+        hist_x = {_particle_id(p): [p.x] for p in sim.particles}
+        hist_y = {_particle_id(p): [p.y] for p in sim.particles}
         MAX_TRAIL = longitud_trazo  # Longitud máxima de la cola
         if plot_3d:
-            hist_z = {p.hash.value: [p.z] for p in sim.particles}
+            hist_z = {_particle_id(p): [p.z] for p in sim.particles}
             for p in sim.particles:
-                h = p.hash.value
+                h = _particle_id(p)
                 line, = ax.plot(hist_x[h], hist_y[h], hist_z[h], '-', alpha=0.4, linewidth=1.0)
                 lineas[h] = line
         else:
             for p in sim.particles:
-                h = p.hash.value
+                h = _particle_id(p)
                 line, = ax.plot(hist_x[h], hist_y[h], '-', alpha=0.4, linewidth=1.0)
                 lineas[h] = line
     
@@ -4010,10 +4021,10 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
         
         if tamanos_dinamicos:
             sizes_inf = [ (p.r * 250.0)**2 for p in sim.particles ]
-            sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and p.hash.value == i_central) else 4.0 for p in sim.particles ]
+            sizes_core = [ (p.r * 250.0)**2 if (i_central is not None and _particle_id(p) == i_central) else 4.0 for p in sim.particles ]
             
-            colors_inf = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'gray' for p in sim.particles ]
-            colors_core = [ 'orange' if (i_central is not None and p.hash.value == i_central) else 'navy' for p in sim.particles ]
+            colors_inf = [ 'orange' if (i_central is not None and _particle_id(p) == i_central) else 'gray' for p in sim.particles ]
+            colors_core = [ 'orange' if (i_central is not None and _particle_id(p) == i_central) else 'navy' for p in sim.particles ]
             
             scatter_inf.set_sizes(sizes_inf)
             scatter_inf.set_facecolors(colors_inf)
@@ -4035,7 +4046,7 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
             
         if trazos:
             for p in sim.particles:
-                h = p.hash.value
+                h = _particle_id(p)
                 hist_x[h].append(p.x)
                 hist_y[h].append(p.y)
                 if len(hist_x[h]) > MAX_TRAIL:
