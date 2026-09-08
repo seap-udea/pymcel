@@ -4333,7 +4333,19 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
         mascara_ligadas = (energia_cinetica + energia_potencial) < 0
         ligadas = np.sum(mascara_ligadas)
         
-        # 5. Centrar la cámara en el Centro de Masa de las partículas ligadas (si la opción está activa)
+        # 5. Razón virial Q = -2K/U  (Q=1 → equilibrio virial)
+        #    Solo sobre partículas ligadas (energía total negativa)
+        if ligadas > 1:
+            m_lig = m_arr[mascara_ligadas]
+            ek_lig = energia_cinetica[mascara_ligadas]
+            dist_lig = distancias[np.ix_(mascara_ligadas, mascara_ligadas)]
+            K_total = np.sum(m_lig * ek_lig)
+            U_total = -0.5 * np.sum(m_lig * np.sum(m_lig / dist_lig, axis=1))
+            Q_virial = -2.0 * K_total / U_total
+        else:
+            Q_virial = 0.0
+        
+        # 6. Centrar la cámara en el Centro de Masa de las partículas ligadas (si la opción está activa)
         if recentrado:
             if ligadas > 0:
                 masas_ligadas = m_arr[mascara_ligadas]
@@ -4357,7 +4369,11 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
                 ax.set_zlim(com_ligadas[2] - hw_z, com_ligadas[2] + hw_z)
         
         # Actualizar texto en el gráfico
-        texto_tiempo.set_text(f"Tiempo: {sim.t:.2f}\nLigadas: {ligadas}/{len(sim.particles)}")
+        texto_tiempo.set_text(
+            f"Tiempo: {sim.t:.2f}\n"
+            f"N: {len(sim.particles)}  Ligadas: {ligadas}\n"
+            f"Q: {Q_virial:.3f}"
+        )
         
         # Refrescar lienzo
         fig.canvas.draw()

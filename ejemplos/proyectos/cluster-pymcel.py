@@ -16,8 +16,8 @@ pc.ncuerpos_rebound_visual_avanzada(
     t_final=None, 
     dt_grafico=0.5,
     limite_grafico=30*a_plummer,
-    titulo=f"Evolución de Cúmulo (N={N_particulas}) en 3D",
-    plot_3d=0,
+    titulo=f"Evolución de Cúmulo (N={N_particulas})",
+    plot_3d=False,
     recentrado=True,
     trazos=0,
     # salva_gif='cluster_evolucion.gif'
