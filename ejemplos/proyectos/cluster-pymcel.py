@@ -2,14 +2,14 @@ import pymcel as pc
 import numpy as np
 np.random.seed(42)
 
-N_particulas = 100
+N_particulas = 50
 M_tot = 1.0
 a_plummer = 1.0
 
 print(f"Generando condiciones iniciales para {N_particulas} partículas...")
 masas, pos, vel = pc.condiciones_iniciales_plummer(N_particulas, M_tot, a_plummer)
 
-pc.ncuerpos_rebound_tiempo_real(
+pc.ncuerpos_rebound_visual_avanzada(
     masas=masas, 
     posiciones=pos, 
     velocidades=vel, 

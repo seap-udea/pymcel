@@ -4,7 +4,7 @@ import numpy as np
 N=4
 masas, pos, vel = pc.condiciones_iniciales_coreografia(N=N)
 
-pc.ncuerpos_rebound_tiempo_real(
+pc.ncuerpos_rebound_visual_avanzada(
     masas=masas, 
     posiciones=pos, 
     velocidades=vel, 

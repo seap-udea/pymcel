@@ -1,9 +1,9 @@
 import pymcel as pc
 import numpy as np
-np.random.seed(42)
+np.random.seed(2)
 
 M_central = 1.0
-N_planetesimales = 50
+N_planetesimales = 10
 masa_total_disco = 0.1 
 
 print(f"Generando disco protoplanetario con {N_planetesimales} planetesimales...")
@@ -18,13 +18,13 @@ masas, pos, vel, radios = pc.condiciones_iniciales_planetesimales(
 )
 
 radios[0]*=0.1
-pc.ncuerpos_rebound_tiempo_real(
+pc.ncuerpos_rebound_visual_avanzada(
     masas=masas, 
     posiciones=pos, 
     velocidades=vel, 
     t_final=None, 
     dt_grafico=0.1,
-    limite_grafico=5*radio_maximo,
+    limite_grafico=2*radio_maximo,
     titulo="Formación Planetaria (Acreción)",
     plot_3d=False, 
     recentrado=1,

@@ -23,7 +23,7 @@ características introducidas en el paquete.
   - Registro del software en Zenodo con DOI permanente (10.5281/zenodo.18849743)
     para facilitar citación académica y aumentar impacto científico del paquete.
   - Integración nativa con `rebound` para simulaciones de N-cuerpos en tiempo real, 
-    usando la nueva función `ncuerpos_rebound_tiempo_real` que incluye despliegue 
+    usando la nueva función `ncuerpos_rebound_visual_avanzada` que incluye despliegue 
     gráfico interactivo 2D/3D con Matplotlib, soporte para exportar estados 
     y detección de partículas ligadas.
   - Nuevas rutinas avanzadas para generar condiciones iniciales de diversos sistemas astrofísicos:
@@ -31,7 +31,16 @@ características introducidas en el paquete.
     - `condiciones_iniciales_toomre`: Colisiones de galaxias (modelo de Toomre 1972) con herramientas paramétricas como `trasladar_y_rotar_sistema`.
     - `condiciones_iniciales_planetesimales`: Discos protoplanetarios enfocados en simular acreción planetaria escalando tamaños con el radio de Hill.
     - `condiciones_iniciales_coreografia`: Generación de datos iniciales precisos para coreografías gravitacionales (Simó, 2001) para N=3, 4 y 5.
-  - Mayor personalización numérica y visual en `ncuerpos_rebound_tiempo_real`: selección del motor de integración interno (p. ej. el integrador de alta precisión adaptativo `ias15` para sistemas caóticos y su parámetro `epsilon`), control explícito del tamaño de la estela visual (`longitud_trazo`) y función automatizada para volcar la animación generada en un GIF.
+  - Mayor personalización numérica y visual en `ncuerpos_rebound_visual_avanzada`: selección del motor de integración interno (p. ej. el integrador de alta precisión adaptativo `ias15` para sistemas caóticos y su parámetro `epsilon`), control explícito del tamaño de la estela visual (`longitud_trazo`) y función automatizada para volcar la animación generada en un GIF.
+  - Nuevas rutinas simplificadas de visualización en tiempo real con Rebound, pensadas
+    para enseñanza. Código ligero y legible, sin dependencias complejas:
+    - `ncuerpos_rebound_visual`: Visualización 2D interactiva (plano XY).
+    - `ncuerpos_rebound_visual3d`: Visualización 3D interactiva.
+    - `ncuerpos_rebound_visual_gif`: Visualización 2D con grabación automática a GIF.
+  - Renombrada `ncuerpos_rebound_tiempo_real` a `ncuerpos_rebound_visual_avanzada`
+    para mayor consistencia con la nueva familia de funciones `ncuerpos_rebound_visual*`.
+  - Nuevo script de ejemplo `ejemplos/proyectos/tiempo-real-rutina.py` que demuestra
+    el uso de las rutinas simplificadas.
   - Mejoras de mantenimiento que impactan estabilidad general del paquete y
     calidad de releases en la rama 0.9.x.
 

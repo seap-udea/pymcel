@@ -3794,7 +3794,257 @@ def condiciones_iniciales_coreografia(N=3):
         
     return masas, posiciones, velocidades
 
-def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,  
+def ncuerpos_rebound_visual(masas, posiciones, velocidades,
+                             t_final=None, dt_grafico=0.2,
+                             limite=4.0, titulo=None,
+                             markersize=3, color='navy', alpha=0.7):
+    """
+    Visualización en tiempo real (2D) de un sistema de N cuerpos usando Rebound.
+
+    Versión simplificada pensada para enseñanza. Muestra las partículas
+    en el plano XY mientras Rebound integra las ecuaciones de movimiento.
+
+    Parámetros:
+    -----------
+    masas : ndarray de forma (N,)
+        Masas de las partículas.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales (x, y, z).
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales (vx, vy, vz).
+    t_final : float o None
+        Tiempo final de la simulación. Si es None, corre indefinidamente.
+    dt_grafico : float
+        Intervalo de tiempo entre actualizaciones del gráfico.
+    limite : float
+        Límite espacial de los ejes (de -limite a +limite).
+    titulo : str o None
+        Título del gráfico.
+    markersize : float
+        Tamaño de los marcadores de las partículas.
+    color : str
+        Color de los marcadores.
+    alpha : float
+        Transparencia de los marcadores.
+
+    Ejemplo:
+    --------
+    >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, masa_total=1.0, radio_escala=1.0)
+    >>> ncuerpos_rebound_visual(masas, pos, vel, limite=5.0)
+    """
+    import rebound
+
+    N = len(masas)
+    sim = rebound.Simulation()
+    sim.G = 1.0
+
+    for i in range(N):
+        sim.add(m=masas[i],
+                x=posiciones[i, 0], y=posiciones[i, 1], z=posiciones[i, 2],
+                vx=velocidades[i, 0], vy=velocidades[i, 1], vz=velocidades[i, 2])
+    sim.move_to_com()
+
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    ax.set_xlim(-limite, limite)
+    ax.set_ylim(-limite, limite)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    if titulo:
+        ax.set_title(titulo)
+    ax.grid()
+
+    x_data = [p.x for p in sim.particles]
+    y_data = [p.y for p in sim.particles]
+    dibujo, = ax.plot(x_data, y_data, 'o', markersize=markersize, color=color, alpha=alpha)
+
+    while (t_final is None or sim.t < t_final) and plt.fignum_exists(fig.number):
+        sim.integrate(sim.t + dt_grafico)
+        x_data = [p.x for p in sim.particles]
+        y_data = [p.y for p in sim.particles]
+        dibujo.set_data(x_data, y_data)
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+    plt.ioff()
+
+
+def ncuerpos_rebound_visual3d(masas, posiciones, velocidades,
+                               t_final=None, dt_grafico=0.2,
+                               limite=4.0, titulo=None,
+                               markersize=3, color='navy', alpha=0.7):
+    """
+    Visualización en tiempo real (3D) de un sistema de N cuerpos usando Rebound.
+
+    Versión simplificada pensada para enseñanza. Muestra las partículas
+    en 3D mientras Rebound integra las ecuaciones de movimiento.
+
+    Parámetros:
+    -----------
+    masas : ndarray de forma (N,)
+        Masas de las partículas.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales (x, y, z).
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales (vx, vy, vz).
+    t_final : float o None
+        Tiempo final de la simulación. Si es None, corre indefinidamente.
+    dt_grafico : float
+        Intervalo de tiempo entre actualizaciones del gráfico.
+    limite : float
+        Límite espacial de los ejes (de -limite a +limite).
+    titulo : str o None
+        Título del gráfico.
+    markersize : float
+        Tamaño de los marcadores de las partículas.
+    color : str
+        Color de los marcadores.
+    alpha : float
+        Transparencia de los marcadores.
+
+    Ejemplo:
+    --------
+    >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, masa_total=1.0, radio_escala=1.0)
+    >>> ncuerpos_rebound_visual3d(masas, pos, vel, limite=5.0)
+    """
+    import rebound
+
+    N = len(masas)
+    sim = rebound.Simulation()
+    sim.G = 1.0
+
+    for i in range(N):
+        sim.add(m=masas[i],
+                x=posiciones[i, 0], y=posiciones[i, 1], z=posiciones[i, 2],
+                vx=velocidades[i, 0], vy=velocidades[i, 1], vz=velocidades[i, 2])
+    sim.move_to_com()
+
+    plt.ion()
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.set_xlim(-limite, limite)
+    ax.set_ylim(-limite, limite)
+    ax.set_zlim(-limite, limite)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    if titulo:
+        ax.set_title(titulo)
+    ax.grid(True)
+
+    x_data = [p.x for p in sim.particles]
+    y_data = [p.y for p in sim.particles]
+    z_data = [p.z for p in sim.particles]
+    dibujo, = ax.plot(x_data, y_data, z_data, 'o', markersize=markersize, color=color, alpha=alpha)
+
+    while (t_final is None or sim.t < t_final) and plt.fignum_exists(fig.number):
+        sim.integrate(sim.t + dt_grafico)
+        x_data = [p.x for p in sim.particles]
+        y_data = [p.y for p in sim.particles]
+        z_data = [p.z for p in sim.particles]
+
+        dibujo.set_data(x_data, y_data)
+        dibujo.set_3d_properties(z_data)
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+    plt.ioff()
+
+
+def ncuerpos_rebound_visual_gif(masas, posiciones, velocidades,
+                                 archivo_gif='animacion.gif',
+                                 t_final=20.0, dt_grafico=0.2,
+                                 limite=4.0, titulo=None, fps=15,
+                                 markersize=3, color='navy', alpha=0.7):
+    """
+    Visualización en tiempo real (2D) de un sistema de N cuerpos con salida a GIF.
+
+    Versión simplificada pensada para enseñanza. Muestra las partículas
+    en el plano XY y graba cada cuadro en un archivo GIF animado.
+
+    Parámetros:
+    -----------
+    masas : ndarray de forma (N,)
+        Masas de las partículas.
+    posiciones : ndarray de forma (N, 3)
+        Posiciones iniciales (x, y, z).
+    velocidades : ndarray de forma (N, 3)
+        Velocidades iniciales (vx, vy, vz).
+    archivo_gif : str
+        Nombre del archivo GIF de salida.
+    t_final : float o None
+        Tiempo final de la simulación. Si es None, corre hasta cerrar la ventana.
+    dt_grafico : float
+        Intervalo de tiempo entre actualizaciones del gráfico.
+    limite : float
+        Límite espacial de los ejes (de -limite a +limite).
+    titulo : str o None
+        Título del gráfico.
+    fps : int
+        Cuadros por segundo en el GIF resultante.
+    markersize : float
+        Tamaño de los marcadores de las partículas.
+    color : str
+        Color de los marcadores.
+    alpha : float
+        Transparencia de los marcadores.
+
+    Ejemplo:
+    --------
+    >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, masa_total=1.0, radio_escala=1.0)
+    >>> ncuerpos_rebound_visual_gif(masas, pos, vel, archivo_gif='cluster.gif', t_final=10.0)
+    """
+    import rebound
+    from matplotlib.animation import PillowWriter
+
+    N = len(masas)
+    sim = rebound.Simulation()
+    sim.G = 1.0
+
+    for i in range(N):
+        sim.add(m=masas[i],
+                x=posiciones[i, 0], y=posiciones[i, 1], z=posiciones[i, 2],
+                vx=velocidades[i, 0], vy=velocidades[i, 1], vz=velocidades[i, 2])
+    sim.move_to_com()
+
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    ax.set_xlim(-limite, limite)
+    ax.set_ylim(-limite, limite)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    if titulo:
+        ax.set_title(titulo)
+    ax.grid()
+
+    x_data = [p.x for p in sim.particles]
+    y_data = [p.y for p in sim.particles]
+    dibujo, = ax.plot(x_data, y_data, 'o', markersize=markersize, color=color, alpha=alpha)
+
+    writer = PillowWriter(fps=fps)
+    writer.setup(fig, archivo_gif, dpi=100)
+
+    while (t_final is None or sim.t < t_final) and plt.fignum_exists(fig.number):
+        sim.integrate(sim.t + dt_grafico)
+        x_data = [p.x for p in sim.particles]
+        y_data = [p.y for p in sim.particles]
+
+        dibujo.set_data(x_data, y_data)
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        writer.grab_frame()
+
+    plt.ioff()
+    print(f"Cerrando archivo GIF '{archivo_gif}'... por favor espera.")
+    writer.finish()
+
+
+def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None,  
                                  # Representación
                                  t_final=20.0, dt_grafico=0.05, 
                                  plot_3d=False, recentrado=False,
@@ -3869,16 +4119,16 @@ def ncuerpos_rebound_tiempo_real(masas, posiciones, velocidades, radios=None,
     ---------
     1. Dinámica de Cúmulo Estelar (Plummer):
     >>> masas, pos, vel = condiciones_iniciales_plummer(N=10, M_total=1.0, R_plummer=1.0)
-    >>> ncuerpos_rebound_tiempo_real(masas, pos, vel, t_final=None, plot_3d=True, recentrado=True)
+    >>> ncuerpos_rebound_visual_avanzada(masas, pos, vel, t_final=None, plot_3d=True, recentrado=True)
     
     2. Colisión de Galaxias (Toomre):
     >>> m1, p1, v1 = condiciones_iniciales_toomre(M_central=1.0, anillos=10, estrellas_por_anillo=12, radio_minimo=0.2, radio_maximo=1.0)
     >>> m2, p2, v2 = condiciones_iniciales_toomre(M_central=0.6, anillos=5, estrellas_por_anillo=6, radio_minimo=0.2, radio_maximo=0.6, r_ini=[3.0, 1.0, 0], v_ini=[-0.5, 0.2, 0])
-    >>> ncuerpos_rebound_tiempo_real(np.concatenate([m1,m2]), np.concatenate([p1,p2]), np.concatenate([v1,v2]), plot_3d=False)
+    >>> ncuerpos_rebound_visual_avanzada(np.concatenate([m1,m2]), np.concatenate([p1,p2]), np.concatenate([v1,v2]), plot_3d=False)
     
     3. Acreción de Planetesimales (con colisiones):
     >>> masas, pos, vel, radios = condiciones_iniciales_planetesimales(M_central=1.0, N_planetesimales=100, masa_total_disco=0.1, radio_minimo=0.5, radio_maximo=3.0)
-    >>> ncuerpos_rebound_tiempo_real(masas, pos, vel, radios=radios, colisiones=True, tamanos_dinamicos=True, i_central=0)
+    >>> ncuerpos_rebound_visual_avanzada(masas, pos, vel, radios=radios, colisiones=True, tamanos_dinamicos=True, i_central=0)
     """
     try:
         import warnings

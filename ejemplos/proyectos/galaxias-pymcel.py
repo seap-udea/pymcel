@@ -3,8 +3,8 @@ import numpy as np
 np.random.seed(42)
     
 M1 = 1.0
-anillos1 = 25
-estrellas_por_anillo = 30
+anillos1 = 10
+estrellas_por_anillo = 10
 masas1, pos1, vel1 = pc.condiciones_iniciales_toomre(
     M_central=M1, 
     anillos=anillos1, 
@@ -33,7 +33,7 @@ N_total = len(masas)
 
 print(f"Iniciando colisión de galaxias con {N_total} partículas...")
 
-pc.ncuerpos_rebound_tiempo_real(
+pc.ncuerpos_rebound_visual_avanzada(
     masas=masas, 
     posiciones=posiciones, 
     velocidades=velocidades, 
