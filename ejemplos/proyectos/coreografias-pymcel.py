@@ -10,7 +10,7 @@ pc.ncuerpos_rebound_visual_avanzada(
     velocidades=vel, 
     t_final=None,
     dt_grafico=0.01,
-    limite_grafico=1.8,
+    rango=1.8,
     titulo=f"Coreografía de {N} Cuerpos (Simó 2001)",
     plot_3d=False,
     recentrado=False,
@@ -18,5 +18,6 @@ pc.ncuerpos_rebound_visual_avanzada(
     integrator='ias15',epsilon=1e-12,
     #integrator='leapfrog',
     longitud_trazo=200,
+    qplot=True,
     # salva_gif=f"coreografia_{N}.gif" # Descomentar para grabar
 )

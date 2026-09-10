@@ -39,9 +39,10 @@ pc.ncuerpos_rebound_visual_avanzada(
     velocidades=velocidades, 
     t_final=None, 
     dt_grafico=0.3,
-    limite_grafico=10.0,
+    rango=10.0,
     titulo="Colisión de Galaxias de Toomre (1972)",
     plot_3d=0,
     recentrado=False,
-    trazos=0
+    trazos=0,
+    qplot=True
 )

@@ -24,7 +24,7 @@ pc.ncuerpos_rebound_visual_avanzada(
     velocidades=vel, 
     t_final=None, 
     dt_grafico=0.1,
-    limite_grafico=2*radio_maximo,
+    rango=2*radio_maximo,
     titulo="Formación Planetaria (Acreción)",
     plot_3d=False, 
     recentrado=1,
@@ -33,6 +33,6 @@ pc.ncuerpos_rebound_visual_avanzada(
     colisiones=True,
     tamanos_dinamicos=True,
     i_central=0,
-    alpha_radio=1,
-    grabar_posiciones=True
+    grabar_posiciones=True,
+    qplot=True
 )

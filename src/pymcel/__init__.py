@@ -4049,12 +4049,14 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
                                  t_final=20.0, dt_grafico=0.05, 
                                  plot_3d=False, recentrado=False,
                                  # Decoración
-                                 limite_grafico=None, titulo=None, trazos=False, longitud_trazo=85,
+                                 rango=None, limite_grafico=None, titulo=None, trazos=False, longitud_trazo=85,
                                  # Colisiones
                                  colisiones=False, tamanos_dinamicos=False,
                                  i_central=None, alpha_radio=0.3, grabar_posiciones=False, salva_gif=None,
                                  # Integrador
-                                 integrator="leapfrog", epsilon=None):
+                                 integrator="leapfrog", epsilon=None,
+                                 # Virial
+                                 qplot=False):
     """
     Integra las ecuaciones de movimiento usando el integrador nativo de Rebound 
     y muestra la evolución de las posiciones en tiempo real mediante Matplotlib.
@@ -4073,8 +4075,11 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
         Tiempo final de la simulación. Si es None, la integración sigue indefinidamente.
     dt_grafico : float
         Intervalo de tiempo entre actualizaciones del gráfico.
+    rango : float o None
+        Límite espacial de los ejes para el gráfico (desde -rango hasta rango).
+        Tiene precedencia sobre `limite_grafico`. Si es None, se calcula automáticamente o se usa `limite_grafico`.
     limite_grafico : float o None
-        Límite espacial de los ejes para el gráfico (desde -limite hasta limite).
+        Límite espacial de los ejes para el gráfico (desde -limite hasta limite). Mantenido por compatibilidad.
     titulo : str o None
         Título personalizado para el gráfico.
     plot_3d : bool
@@ -4109,6 +4114,12 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
     salva_gif : str o None
         Si se provee un nombre de archivo (ej. 'animacion.gif'), guarda la evolución
         en vivo en ese archivo usando PillowWriter.
+    qplot : bool
+        Si es True, añade un panel inferior (en proporción 2:1 respecto al gráfico principal)
+        que muestra en tiempo real la evolución de la razón virial Q = −2K / U de las partículas
+        ligadas, junto con los tiempos característicos t_cross (tiempo de cruce) y t_relax
+        (tiempo de relajación de Spitzer) y una línea horizontal de referencia en Q = 1 (equilibrio virial).
+        Por defecto False.
         
     Observaciones:
     --------------
@@ -4153,7 +4164,9 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
 
     N = len(masas)
     
-    if limite_grafico is None:
+    if rango is not None:
+        limite_grafico = rango
+    elif limite_grafico is None:
         limite_grafico = 2.0 * np.max(np.abs(posiciones))
         
     # Configurar simulación en Rebound
@@ -4186,14 +4199,54 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
     
     # Configurar plot interactivo
     plt.ion()
-    fig = plt.figure(figsize=(7, 7))
-    if plot_3d:
-        ax = fig.add_subplot(111, projection='3d')
-        ax.set_zlim(-limite_grafico, limite_grafico)
-        ax.set_zlabel("Z")
-        z_data = [p.z for p in sim.particles]
+    if qplot:
+        fig = plt.figure(figsize=(7, 9))
+        gs = fig.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.3)
+        if plot_3d:
+            ax = fig.add_subplot(gs[0], projection='3d')
+        else:
+            ax = fig.add_subplot(gs[0])
+        ax_q = fig.add_subplot(gs[1])
+        ax_q.set_xlabel("Tiempo")
+        ax_q.set_ylabel("Q = −2K / U")
+        ax_q.axhline(1.0, color='red', linestyle='--', alpha=0.6, label='Equilibrio virial')
+        ax_q.grid(True, linestyle='--', alpha=0.5)
+
+        # ── Escalas de tiempo características ─────────────────────────────
+        _pos0 = np.array([[p.x, p.y, p.z] for p in sim.particles])
+        _vel0 = np.array([[p.vx, p.vy, p.vz] for p in sim.particles])
+        _m0 = np.array([p.m for p in sim.particles])
+
+        # Radio de media masa
+        _r0 = np.linalg.norm(_pos0, axis=1)
+        _orden = np.argsort(_r0)
+        _m_acum = np.cumsum(_m0[_orden])
+        _idx_hm = np.searchsorted(_m_acum, _m_acum[-1] / 2.0)
+        R_hm = _r0[_orden[min(_idx_hm, len(_r0) - 1)]]
+
+        # Dispersión de velocidades 3-D
+        sigma_v = np.sqrt(np.mean(np.sum(_vel0**2, axis=1)))
+
+        # Tiempos característicos
+        tcross = R_hm / sigma_v if sigma_v > 0 else np.inf
+        N_eff = len(_m0)
+        trelax = (N_eff / (8.0 * np.log(N_eff))) * tcross if N_eff > 1 else np.inf
+
+        ax_q.axvline(tcross, color='green', linestyle=':', alpha=0.7,
+                     label=f'$t_{{cross}}$ = {tcross:.2f}')
+        ax_q.axvline(trelax, color='purple', linestyle=':', alpha=0.7,
+                     label=f'$t_{{relax}}$ = {trelax:.2f}')
+        ax_q.legend(loc='lower left', fontsize=9, ncol=4)
+
+        q_times = []
+        q_values = []
+        line_q, = ax_q.plot([], [], '-', color='steelblue', linewidth=1.5, label='Q = ?')
     else:
-        ax = fig.add_subplot(111)
+        fig = plt.figure(figsize=(7, 7))
+        if plot_3d:
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            ax = fig.add_subplot(111)
         
     ax.set_xlim(-limite_grafico, limite_grafico)
     ax.set_ylim(-limite_grafico, limite_grafico)
@@ -4371,9 +4424,24 @@ def ncuerpos_rebound_visual_avanzada(masas, posiciones, velocidades, radios=None
         # Actualizar texto en el gráfico
         texto_tiempo.set_text(
             f"Tiempo: {sim.t:.2f}\n"
-            f"N: {len(sim.particles)}  Ligadas: {ligadas}\n"
-            f"Q: {Q_virial:.3f}"
+            f"N: {len(sim.particles)}  Ligadas: {ligadas}"
         )
+        
+        # ── Actualizar panel Q(t) si qplot activo ────────────────────────
+        if qplot:
+            q_times.append(sim.t)
+            q_values.append(Q_virial)
+            line_q.set_data(q_times, q_values)
+            line_q.set_label(f'Q = {Q_virial:.3f}')
+            ax_q.legend(loc='lower left', fontsize=9, ncol=4)
+            ax_q.set_xlim(0, max(sim.t, 1.0))
+            # Rango vertical adaptativo
+            if len(q_values) > 1:
+                q_min = min(min(q_values) * 0.9, 0.0)
+                q_max = max(max(q_values) * 1.1, 1.5)
+            else:
+                q_min, q_max = 0.0, 2.0
+            ax_q.set_ylim(q_min, q_max)
         
         # Refrescar lienzo
         fig.canvas.draw()
